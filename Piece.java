@@ -117,12 +117,13 @@ public class Piece {
     }
 
     public boolean canMoveThroughCheck(int x, int y) {
-        Piece previousPiece = board.getPieces()[x][y];
-        board.getPieces()[x][y] = this;
         if (xPos == -1 && yPos == -1) {
             visible = false;
             return false;
         }
+        Piece previousPiece = board.getPieces()[x][y];
+        board.getPieces()[x][y] = this;
+        
         board.getPieces()[getxPos()][getyPos()] = null;
         if (previousPiece != null) {
             previousPiece.setVisible(false);

@@ -20,15 +20,16 @@ public class Knight extends Piece{
         if (potTarget != null && potTarget.isWhite() == isWhite) {
             return false;
         }
+        int maxDif = Math.max(Math.abs(xPos - x), Math.abs(yPos - y));
+        if (!(Math.pow(Math.abs(xPos - x), 2) + Math.pow(Math.abs(yPos - y), 2) == 5 && maxDif == 2)) {
+            return false;
+        }
         if (!canMoveThroughCheck(x, y)) {
             return false;
         }
 
-        int maxDif = Math.max(Math.abs(xPos - x), Math.abs(yPos - y));
-        if (Math.pow(Math.abs(xPos - x), 2) + Math.pow(Math.abs(yPos - y), 2) == 5 && maxDif == 2) {
-            return true;
-        }
-        return false;
+        
+        return true;
     }
     @Override
     public boolean canAttack(int x, int y) {

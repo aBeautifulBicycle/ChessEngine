@@ -9,9 +9,11 @@ public class Board {
     public class Move {
         private int[] moveLocation;
         private Piece movePiece;
-        public Move(int[] moveLocation, Piece movePiece) {
+        private int moveEvaluation;
+        public Move(int[] moveLocation, Piece movePiece, int moveEvaluation) {
             this.moveLocation = moveLocation;
             this.movePiece = movePiece;
+            this.moveEvaluation = moveEvaluation;
         }
         public int[] getMoveLocation() {
             return moveLocation;
@@ -27,7 +29,13 @@ public class Board {
         }
         @Override
         public String toString() {
-            return movePiece + " " + Arrays.toString(moveLocation);
+            return movePiece + " " + Arrays.toString(moveLocation) + " " + moveEvaluation;
+        }
+        public int getMoveEvaluation() {
+            return moveEvaluation;
+        }
+        public void setMoveEvaluation(int moveEvaluation) {
+            this.moveEvaluation = moveEvaluation;
         }
     }
     private Piece[][] pieces;
@@ -40,6 +48,7 @@ public class Board {
     private int halfmoveClock, fullmoveClock;
     private ArrayList<String> fenList = new ArrayList<>();
     private Stack<Move> moveOrder = new Stack<>();
+    private int numMoves = 0;
     public Board(Piece[][] pieces, JPanel[][] squares, ArrayList<Piece> pieceList) {
         this.pieces = pieces;
         this.squares = squares;
@@ -192,11 +201,61 @@ public class Board {
         // TODO: optimize the order in which moves are searched (currently just goes top left to bottom right)
     }
 
-    public double exploreAllPositions(boolean isWhite, int depth, boolean checkValid) {
-        double numMoves = 0;
+    public double evaluatePosition(boolean isWhite, int maxDepth) {
+        double eval = 0;
+//        int material = getMaterial(isWhite);
+//        int mobility = getMobility(isWhite);
+//        int kingSafety = getKingSafety(isWhite);
+//        int pawnStructure = getPawnStructure(isWhite);
+//        int kingCentroid = getKingCentroid(isWhite);
+//        int passedPawns = getPassedPawns(isWhite);
+//        int isolatedPawns = getIsolatedPawns(isWhite);
+//        int doubledPawns = getDoubledPawns(isWhite);
+//        int bishopPair = getBishopPair(isWhite);
+        if (maxDepth == 0) {
+            return evaluate(isWhite);
+        }
+        ArrayList<Move> moves = getAllValidMoves(isWhite);
+        optimizeOrder(moves);
+//        if (moves.size() == 0) {
+//            return evaluateEnd(isWhite);
+//        }
+        
+
+        for (Move move : moves) {
+            
+            Piece p = move.getMovePiece();
+            
+            if (p.simMove(move.getMoveLocation()[0], move.getMoveLocation()[1])) {
+                moveOrder.push(move);
+                eval = evaluatePosition(!isWhite, maxDepth - 1);
+                
+                p.unSimMove();
+                moveOrder.pop();
+            }
+        }
+        return eval;
+    }
+
+    public double evaluate(boolean isWhite) {
+        return 0;
+    }
+
+    public double evaluateEnd(boolean isWhite) {
+        if (inCheck(isWhite)) {
+            return isWhite? -9999 : 9999;
+        }
+        return -1;
+    }
+
+    public int exploreAllPositions(boolean isWhite, int depth, boolean checkValid) {
+        int numMoves = 0;
         int maxDepth = Globals.MAX_SEARCH_DEPTH;
         Piece[][] initPieces = new Piece[pieces.length][];
         ArrayList<Move> moves = getAllValidMoves(isWhite);
+        if (moves.size() == 0) {
+            return 0;
+        }
         optimizeOrder(moves);
         if (depth == 0) {
             moveOrder = new Stack<>();
@@ -213,6 +272,7 @@ public class Board {
             
             Piece p = move.getMovePiece();
             numMoves++;
+            
             if (p.simMove(move.getMoveLocation()[0], move.getMoveLocation()[1])) {
                 moveOrder.push(move);
                 
@@ -239,7 +299,7 @@ public class Board {
             if (p.isVisible() && p.isWhite() == isWhite) {
                 int[][] valid = p.getValidMoves();
                 for (int[] movePos : valid) {
-                    Move move = new Move(movePos, p);
+                    Move move = new Move(movePos, p, 0);
                     moves.add(move);
                 }
                 
@@ -250,7 +310,7 @@ public class Board {
             if (p.isVisible() && p.isWhite() == isWhite) {
                 int[][] valid = p.getValidMoves();
                 for (int[] movePos : valid) {
-                    Move move = new Move(movePos, p);
+                    Move move = new Move(movePos, p, 0);
                     moves.add(move);
                 }
             } else if (!p.isVisible()) {
@@ -263,8 +323,6 @@ public class Board {
         }
         return moves;
     }
-
-
 
     public boolean checkValid(Piece[][] initPieces) {
         boolean same = true;
@@ -608,5 +666,13 @@ public class Board {
 
     public void setMoveOrder(Stack<Move> moveOrder) {
         this.moveOrder = moveOrder;
+    }
+
+    public int getNumMoves() {
+        return numMoves;
+    }
+
+    public void setNumMoves(int numMoves) {
+        this.numMoves = numMoves;
     }
 }

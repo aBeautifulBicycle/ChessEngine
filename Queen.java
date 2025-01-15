@@ -16,6 +16,9 @@ public class Queen extends Piece {
         if (outOfBoard(x, y)) {
             return false;
         }
+        if (!(x == xPos || y == yPos || Math.abs(x - xPos) == Math.abs(y - yPos))) {
+            return false;
+        }
         Piece potentialTarget = board.getPieces()[x][y];
         if (potentialTarget != null && potentialTarget.isWhite() == isWhite) {
             return false;
@@ -41,6 +44,9 @@ public class Queen extends Piece {
     @Override
     public boolean canAttack(int x, int y) {
         if (x == xPos && y == yPos) {
+            return false;
+        }
+        if (!(x == xPos || y == yPos || Math.abs(x - xPos) == Math.abs(y - yPos))) {
             return false;
         }
         Piece target = board.getPieces()[x][y];

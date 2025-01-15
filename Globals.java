@@ -9,7 +9,7 @@ public class Globals {
     public static final int WIDTH = 800;
     public static final int HEIGHT = 800;
     public static final int OFFSET_AMOUNT = 10;
-    public static final String STARTING_BOARD_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    public static final String STARTING_BOARD_FEN = "rnbqkbnr/pppppppp/8/8/8/2N5/PPPPPPPP/R1BQKBNR w KQkq - 0 1";
     public static final String TEST_FEN           = STARTING_BOARD_FEN;
     public static final int MAX_SEARCH_DEPTH = 5;
 

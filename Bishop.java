@@ -13,7 +13,11 @@ public class Bishop extends Piece{
         if (x == xPos && y == yPos) {
             return false;
         }
+        
         if (outOfBoard(x, y)) {
+            return false;
+        }
+        if (!(Math.abs(x - xPos) == Math.abs(y - yPos))) {
             return false;
         }
         Piece potentialTarget = board.getPieces()[x][y];
@@ -27,7 +31,7 @@ public class Bishop extends Piece{
         if (inWay(x, y)) {
             return false;
         }
-        return Math.abs(x - xPos) == Math.abs(y - yPos);
+        return true;
     }
     @Override
     public boolean canAttack(int x, int y) {

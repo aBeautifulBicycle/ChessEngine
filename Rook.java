@@ -13,6 +13,9 @@ public class Rook extends Piece{
         if (x == xPos && y == yPos) {
             return false;
         }
+        if (!(x == xPos || y == yPos)) {
+            return false;
+        }
         if (outOfBoard(x, y)) {
             return false;
         }
@@ -41,6 +44,9 @@ public class Rook extends Piece{
     @Override
     public boolean canAttack(int x, int y) {
         if (x == xPos && y == yPos) {
+            return false;
+        }
+        if (!(x == xPos || y == yPos)) {
             return false;
         }
         

@@ -21,6 +21,12 @@ public class King extends Piece{
         if (potTarget != null && potTarget.isWhite() == isWhite) {
             return false;
         }
+        boolean validMove = false;
+        if (!((Math.abs(x - xPos) <= 1 && Math.abs(y - yPos) <= 1) && Math.abs(x - xPos) + Math.abs(y - yPos) != 0)) {
+            return false;
+        } else {
+            validMove = true;
+        }
         
         // try moving the king there
         Piece previousPiece = board.getPieces()[x][y];
@@ -34,15 +40,15 @@ public class King extends Piece{
         board.getPieces()[x][y] = previousPiece;
         board.getPieces()[getxPos()][getyPos()] = this;
         
-        
-        if ((Math.abs(x - xPos) <= 1 && Math.abs(y - yPos) <= 1) && Math.abs(x - xPos) + Math.abs(y - yPos) != 0) {
+        if (validMove) {
             return true;
         }
+        
         if (canCastle && x == xPos && y == 0 || y == 1 || y == 2) {
-            return validCastleLeft();
+            return validCastleLeft(false);
         } 
         if (canCastle && x == xPos && y == Globals.COLS - 1 || y == Globals.COLS - 2) {
-            return validCastleRight();
+            return validCastleRight(false);
         }
         return false;
     }
@@ -155,15 +161,12 @@ public class King extends Piece{
         return true;
     }
 
-    public boolean validCastleLeft() {
-        if (!canCastle) {
+    public boolean validCastleLeft(boolean inCheck) {
+        if (!canCastle || inCheck) {
             return false;
         }
         Piece leftRook = board.getPieces()[xPos][0];
         if (leftRook == null || leftRook.isWhite()!= isWhite() || !leftRook.isCanCastle() || board.getPieces()[xPos][1]!= null || board.getPieces()[xPos][2]!= null || board.getPieces()[xPos][3] != null) {
-            return false;
-        }
-        if (board.inCheck(isWhite)) {
             return false;
         }
         if (board.isAttacked(xPos, yPos - 2, isWhite) || board.isAttacked(xPos, yPos - 1, isWhite)) {
@@ -173,15 +176,12 @@ public class King extends Piece{
         return true;
     }
 
-    public boolean validCastleRight() {
-        if (!canCastle) {
+    public boolean validCastleRight(boolean inCheck) {
+        if (!canCastle || inCheck) {
             return false;
         }
         Piece rightRook = board.getPieces()[xPos][Globals.COLS - 1];
         if (rightRook == null || rightRook.isWhite()!= isWhite() || !rightRook.isCanCastle() || board.getPieces()[xPos][Globals.COLS - 2]!= null || board.getPieces()[xPos][Globals.COLS - 3] != null) {
-            return false;
-        }
-        if (board.inCheck(isWhite())) {
             return false;
         }
         if (board.isAttacked(xPos, yPos + 1, isWhite) || board.isAttacked(xPos, yPos + 2, isWhite)) {
@@ -250,10 +250,10 @@ public class King extends Piece{
             }
         }
         if (canCastle) {
-            if (validCastleLeft()) {
+            if (validCastleLeft(board.inCheck(isWhite()))) {
                 validMoves.add(new int[]{xPos, yPos - 2});
             }
-            if (validCastleRight()) {
+            if (validCastleRight(board.inCheck(isWhite()))) {
                 validMoves.add(new int[]{xPos, yPos + 2});
             }
         }

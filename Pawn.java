@@ -24,42 +24,35 @@ public class Pawn extends Piece{
         if (y == yPos &&  targetPiece != null) {
             return false;
         }
-        if (!canMoveThroughCheck(x, y)) {
-            return false;
-        }
+        boolean canMove = false;
         
         if (isWhite()) {
             if (x == xPos - 1 && y == yPos) {
-                return true;
+                canMove = true;
             } else if (x == xPos - 2 && y == yPos && xPos == Globals.ROWS - 2 && board.getPieces()[xPos - 1][y] == null) {
-                return true;
+                canMove = true;
             } else if (x == xPos - 1 && Math.abs(yPos - y) == 1) {
                 if (targetPiece != null && targetPiece.isWhite() != this.isWhite())
-                    return true;
+                    canMove = true;
                 if (board.getPieces()[xPos][y] != null && board.getPieces()[xPos][y].isWhite() != isWhite && board.getPieces()[xPos][y].isEnpassantable()) {
-                    return true;
+                    canMove = true;
                 } 
-                return false;
-            } else {
-                return false;
             }
 
         } else {
             if (x == xPos + 1 && y == yPos) {
-                return true;
+                canMove = true;
             } else if (x == xPos + 2 && y == yPos && xPos == 1 && board.getPieces()[xPos + 1][y] == null) {
-                return true;
+                canMove = true;
             } else if (x == xPos + 1 && Math.abs(yPos - y) == 1) {
                 if (targetPiece != null && targetPiece.isWhite() != this.isWhite())
-                    return true;
+                    canMove = true;
                 if (board.getPieces()[xPos][y] != null && board.getPieces()[xPos][y].isWhite() != isWhite && board.getPieces()[xPos][y].isEnpassantable()) {
-                    return true;
+                    canMove = true;
                 } 
-                return false;
-            } else {
-                return false;
             }
         }
+        return canMove && canMoveThroughCheck(x, y);
     }
 
     @Override

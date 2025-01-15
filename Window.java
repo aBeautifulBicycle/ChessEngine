@@ -285,16 +285,21 @@ public class Window {
                             fullFen += " " + board.getHalfmoveClock() + " " + board.getFullmoveClock();
                             System.out.println(fullFen);
                             board.getFenList().add(currentFen);
-                            System.out.println(board.getbKing().canMove(0, 7));
+                            
                             long start = System.nanoTime();
                             System.out.println(board.exploreAllPositions(board.isWhiteTurn(), 0, true));
+                            board.evaluatePosition(board.isWhiteTurn(), Globals.MAX_SEARCH_DEPTH);
+                            System.out.println(board.getNumMoves());
+                            board.setNumMoves(0);
                             long end = System.nanoTime();
-                            System.out.println(board.getbKing().canMove(0, 7));
                             System.out.println("Time taken (with check): " + (end - start) / 1_000_000 + "ms");
+                            
                             start = System.nanoTime();
                             System.out.println(board.exploreAllPositions(board.isWhiteTurn(), 0, false));
+                            board.evaluatePosition(board.isWhiteTurn(), Globals.MAX_SEARCH_DEPTH);
+                            System.out.println(board.getNumMoves());
+                            board.setNumMoves(0);
                             end = System.nanoTime();
-                            System.out.println(board.getbKing().canMove(0, 7));
                             System.out.println("Time taken (no check): " + (end - start) / 1_000_000 + "ms");
                         }
                     }
