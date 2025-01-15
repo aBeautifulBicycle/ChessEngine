@@ -79,7 +79,6 @@ public class Window {
         board.setWhiteTurn(false);
         
         String[] rows = fenSplit[0].split("/");
-        System.out.println(Arrays.toString(rows));
         for (int col = 0; col < rows.length; col++) {
             int rowsSkipped = 0;
             for (int row = 0; row < Globals.COLS; row++) {
@@ -176,16 +175,6 @@ public class Window {
         board.setFullmoveClock(Integer.parseInt(fenSplit[5]));
 
         window.repaint();
-        long start = System.nanoTime();
-//        System.out.println(board.getAllValidMoves(board.isWhiteTurn(), 0, false));
-//        long end = System.nanoTime();
-//        System.out.println("Time taken (no check): " + (end - start) / 1_000_000 + "ms");
-//        start = System.nanoTime();
-//        System.out.println(board.getAllValidMoves(board.isWhiteTurn(), 0, true));
-//        end = System.nanoTime();
-//        System.out.println("Time taken (with check): " + (end - start) / 1_000_000 + "ms");
-        System.out.println(board.getbKing().isCanCastle());
-        System.out.println(board.getwKing().isCanCastle());
 
 
     }
@@ -206,7 +195,7 @@ public class Window {
                 board.getSquares()[col][row].addMouseListener(new MouseAdapter() {
                     @Override
                     public void mousePressed(MouseEvent e) {
-                        
+                        boolean moved = false;
                         if (e.getButton() == MouseEvent.BUTTON1) {
                             Iterator<Piece> iterator = board.getPieceList().iterator();
                             while (iterator.hasNext()) {
@@ -220,26 +209,9 @@ public class Window {
                                 } else if (piece.isSelected()) { // Check if the object is selected
                                     // Move the object to the clicked square
                                     if (piece.tryMove(finalRow, finalCol)) {
+                                        moved = true;
                                         System.out.println(piece.getName() + " moved to: (" + finalRow + ", " + finalCol + ")");
-                                        String currentFen = board.getFen();
-                                        String fullFen = currentFen;
-                                        if (board.isWhiteTurn()) {
-                                            fullFen += " w";
-                                        } else {
-                                            fullFen += " b";
-                                        }
-                                        fullFen += " - -";
-                                        fullFen += " " + board.getHalfmoveClock() + " " + board.getFullmoveClock();
-                                        System.out.println(fullFen);
-                                        board.getFenList().add(currentFen);
-                                        long start = System.nanoTime();
-                                        System.out.println(board.exploreAllPositions(board.isWhiteTurn(), 0, false));
-                                        long end = System.nanoTime();
-                                        System.out.println("Time taken (no check): " + (end - start) / 1_000_000 + "ms");
-                                        start = System.nanoTime();
-                                        System.out.println(board.exploreAllPositions(board.isWhiteTurn(), 0, true));
-                                        end = System.nanoTime();
-                                        System.out.println("Time taken (with check): " + (end - start) / 1_000_000 + "ms");
+                                        
                                         
                                         if (!piece.isWhite()) {
                                              board.setFullmoveClock(board.getFullmoveClock() + 1);
@@ -265,6 +237,8 @@ public class Window {
                                         } else if (gameState == 6) {
                                              System.out.println("Insufficient material! Game is over.");
                                         }
+
+                                        
                                     }
                                     
                                 }
@@ -299,7 +273,30 @@ public class Window {
                             board.getPieceList().addAll(board.getNewPieces());
                             board.setNewPieces(new ArrayList<>());
                         }
-                        
+                        if (moved) {
+                            String currentFen = board.getFen();
+                            String fullFen = currentFen;
+                            if (board.isWhiteTurn()) {
+                                fullFen += " w";
+                            } else {
+                                fullFen += " b";
+                            }
+                            fullFen += " - -";
+                            fullFen += " " + board.getHalfmoveClock() + " " + board.getFullmoveClock();
+                            System.out.println(fullFen);
+                            board.getFenList().add(currentFen);
+                            System.out.println(board.getbKing().canMove(0, 7));
+                            long start = System.nanoTime();
+                            System.out.println(board.exploreAllPositions(board.isWhiteTurn(), 0, true));
+                            long end = System.nanoTime();
+                            System.out.println(board.getbKing().canMove(0, 7));
+                            System.out.println("Time taken (with check): " + (end - start) / 1_000_000 + "ms");
+                            start = System.nanoTime();
+                            System.out.println(board.exploreAllPositions(board.isWhiteTurn(), 0, false));
+                            end = System.nanoTime();
+                            System.out.println(board.getbKing().canMove(0, 7));
+                            System.out.println("Time taken (no check): " + (end - start) / 1_000_000 + "ms");
+                        }
                     }
                 });
             }

@@ -201,14 +201,10 @@ public class Rook extends Piece{
         return true;
     }
 
+
+
     @Override
-    public boolean tryMove(int x, int y) {
-        selected = false;
-        unhighlightValidMoves();
-        if (!canMove(x, y)) {
-            return false;
-        }
-        board.noPassants();
+    public boolean move(int x, int y) {
         Piece targetPiece = board.getPieces()[x][y];
         if (targetPiece != null && targetPiece.isWhite() != this.isWhite) {
             board.removePiece(targetPiece);

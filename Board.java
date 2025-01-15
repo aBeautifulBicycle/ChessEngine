@@ -165,11 +165,39 @@ public class Board {
         }
     }
 
-    public int exploreAllPositions(boolean isWhite, int depth, boolean checkValid) {
-        int numMoves = 0;
+    @Override
+    public String toString() {
+        String returnString = " ";
+        for (int i = 0; i < Globals.COLS; i++) {
+            returnString += i;
+        }
+        returnString += "\n";
+        int q = 0;
+        for (Piece[] p : pieces) {
+            returnString += q++;
+            for (Piece p2 : p) {
+                if (p2 == null) {
+                    returnString += " ";
+                } else {
+                    returnString += p2;
+                }
+            }
+            returnString += "\n";
+        }
+        returnString += "\n";
+        return returnString;
+    }
+
+    public void optimizeOrder(ArrayList<Move> moves) {
+        // TODO: optimize the order in which moves are searched (currently just goes top left to bottom right)
+    }
+
+    public double exploreAllPositions(boolean isWhite, int depth, boolean checkValid) {
+        double numMoves = 0;
         int maxDepth = Globals.MAX_SEARCH_DEPTH;
         Piece[][] initPieces = new Piece[pieces.length][];
         ArrayList<Move> moves = getAllValidMoves(isWhite);
+        optimizeOrder(moves);
         if (depth == 0) {
             moveOrder = new Stack<>();
         }
@@ -182,11 +210,12 @@ public class Board {
             }
         }
         for (Move move : moves) {
+            
             Piece p = move.getMovePiece();
             numMoves++;
             if (p.simMove(move.getMoveLocation()[0], move.getMoveLocation()[1])) {
-                
                 moveOrder.push(move);
+                
                 if (depth < maxDepth) {
                     numMoves += exploreAllPositions(!isWhite, depth, checkValid);
                 }
@@ -224,7 +253,7 @@ public class Board {
                     Move move = new Move(movePos, p);
                     moves.add(move);
                 }
-            } else {
+            } else if (!p.isVisible()) {
                 removePieces.add(p);
             }
         }
@@ -235,74 +264,7 @@ public class Board {
         return moves;
     }
 
-    public int getAllValidMoves(boolean isWhite, int depth, boolean checkValid) {
-        int numMoves = 0;
-        ArrayList<Piece> removePieces = new ArrayList<>();
-        if (depth == 0) {
-            moveOrder = new Stack<>();
-        }
-        depth++;
-        int maxDepth = 4;
-        Piece[][] initPieces = new Piece[pieces.length][];
-        if (checkValid) {
-            for (int i = 0; i < pieces.length; i++) {
-                initPieces[i] = Arrays.copyOf(pieces[i], pieces[i].length);
-            }
-        }
-        
-        int count = 0;
-        for (Piece p : pieceList) {
-            if (p.isVisible() && p.isWhite() == isWhite) {
-                int[][] valid = p.getValidMoves();
-                for (int[] move : valid) {
-                    count++;
-                    int initX = p.getxPos();
-                    int initY = p.getyPos();
-                    if (p.simMove(move[0], move[1])) {
-                        moveOrder.push(new Move(move, p));
-                        if (depth < maxDepth) {
-                            numMoves += getAllValidMoves(!isWhite, depth, checkValid);
-                        }
-                        
-                        p.unSimMove();
-                        if (checkValid) {
-                            checkValid(initPieces);
-                        }
-                        moveOrder.pop();
-                    }
-                }
-            } 
-        }
-        for (Piece p : newPieces) {
-            if (p.isVisible() && p.isWhite() == isWhite) {
-                int[][] valid = p.getValidMoves();
-                for (int[] move : valid) {
-                    count++;
-                    
-                    if (p.simMove(move[0], move[1])) {
-                        moveOrder.push(new Move(move, p));
-                        if (depth < maxDepth) {
-                            numMoves += getAllValidMoves(!isWhite, depth, checkValid);
-                        }
-                        moveOrder.pop();
-                        p.unSimMove();
-                        if (checkValid) {
-                            checkValid(initPieces);
-                        }
-                    }
-                }
-            } else {
-                removePieces.add(p);
-            }
-        }
-        for (Piece p : removePieces) {
-            newPieces.remove(p);
-        }
-        if (checkValid) {
-        checkValid(initPieces);
-    }
-        return numMoves + count;
-    }
+
 
     public boolean checkValid(Piece[][] initPieces) {
         boolean same = true;
@@ -540,12 +502,12 @@ public class Board {
 
     public boolean isAttacked(int x, int y, boolean byWhite) {
         for (Piece p : pieceList) {
-            if (p.isWhite() != byWhite && p.canAttack(x, y)) {
+            if (p.isVisible() && p.isWhite() != byWhite && p.canAttack(x, y)) {
                 return true;
             }
         }
         for (Piece p : newPieces) {
-            if (p.isWhite() != byWhite && p.canAttack(x, y)) {
+            if (p.isVisible() && p.isWhite() != byWhite && p.canAttack(x, y)) {
                 return true;
             }
         }

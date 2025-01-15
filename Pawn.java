@@ -139,13 +139,7 @@ public class Pawn extends Piece{
     }
 
     @Override
-    public boolean tryMove(int x, int y) {
-        selected = false;
-        unhighlightValidMoves();
-        if (!canMove(x, y)) {
-            return false;
-        }
-        board.noPassants();
+    public boolean move(int x, int y) {
         if (Math.abs(x - xPos) == 2) {
             enpassantable = true;
         }
@@ -190,26 +184,8 @@ public class Pawn extends Piece{
             
             potPiece = board.getPieces()[xPos][y];
             if (!board.getMoveOrder().peek().getMovePiece().equals(potPiece)) {
-                System.out.println("RAN");
                 return false;
             }
-            System.out.println(xPos);
-            System.out.println(yPos);
-            System.out.println(x);
-            System.out.println(y);
-            System.out.println("passants detected: " + numCools++);
-            System.out.println(Arrays.toString(board.getMoveOrder().toArray()));
-            for (int i = 0; i < Globals.COLS; i++) {
-                for (int j = 0; j < Globals.ROWS; j++) {
-                    if (board.getPieces()[i][j] == null) {
-                        System.out.print(" ");
-                        continue;
-                    } 
-                    System.out.print(board.getPieces()[i][j]);
-                }
-                System.out.println();
-            }
-            System.out.println("");
             state[2] = 2;
             state[4] = xPos;
             state[5] = y;
@@ -241,9 +217,12 @@ public class Pawn extends Piece{
             } else {
                 promotedPiece = new Queen(Globals.BLACK_QUEEN_PNG, "q", xPos, yPos);
             }
+            promotedPiece.setVisible(true);
             visible = false;
             board.getPieces()[xPos][yPos] = promotedPiece;
             promotedPiece.setParent(this);
+            board.getNewPieces().add(promotedPiece);
+            promotedPiece.setBoard(board);
         }
         return true;
     }
@@ -254,6 +233,16 @@ public class Pawn extends Piece{
             return false;
         }
         int[] state = lastState.pop();
+        if (!board.getPieces()[xPos][yPos].equals(this)) {
+            board.getPieces()[xPos][yPos].setVisible(false);
+            board.getPieces()[xPos][yPos] = null;
+            visible = true;
+            if (xPos == 0) {
+                xPos = 1;
+            } else {
+                xPos = Globals.COLS - 2;
+            }
+        }
         
         board.getPieces()[xPos][yPos] = null;
         if (state[6] == 1) {

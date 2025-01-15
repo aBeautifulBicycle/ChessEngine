@@ -6,16 +6,15 @@ import javax.swing.ImageIcon;
 public class King extends Piece{
     public King(ImageIcon icon, String name, int xPos, int yPos) {
         super(icon, name, xPos, yPos);
-        canCastle = true;
         pieceType = "King"; 
     }
 
     @Override
     public boolean canMove(int x, int y) {
-        if (x == xPos && y == yPos) {
+        if (outOfBoard(x, y)) {
             return false;
         }
-        if (outOfBoard(x, y)) {
+        if (x == xPos && y == yPos) {
             return false;
         }
         Piece potTarget = board.getPieces()[x][y];
@@ -157,6 +156,9 @@ public class King extends Piece{
     }
 
     public boolean validCastleLeft() {
+        if (!canCastle) {
+            return false;
+        }
         Piece leftRook = board.getPieces()[xPos][0];
         if (leftRook == null || leftRook.isWhite()!= isWhite() || !leftRook.isCanCastle() || board.getPieces()[xPos][1]!= null || board.getPieces()[xPos][2]!= null || board.getPieces()[xPos][3] != null) {
             return false;
@@ -172,6 +174,9 @@ public class King extends Piece{
     }
 
     public boolean validCastleRight() {
+        if (!canCastle) {
+            return false;
+        }
         Piece rightRook = board.getPieces()[xPos][Globals.COLS - 1];
         if (rightRook == null || rightRook.isWhite()!= isWhite() || !rightRook.isCanCastle() || board.getPieces()[xPos][Globals.COLS - 2]!= null || board.getPieces()[xPos][Globals.COLS - 3] != null) {
             return false;
@@ -186,14 +191,10 @@ public class King extends Piece{
 
     }
 
+
+
     @Override
-    public boolean tryMove(int x, int y) {
-        selected = false;
-        unhighlightValidMoves();
-        if (!canMove(x, y)) {
-            return false;
-        }
-        board.noPassants();
+    public boolean move(int x, int y) {
         if (!((Math.abs(x - xPos) <= 1 && Math.abs(y - yPos) <= 1) && Math.abs(x - xPos) + Math.abs(y - yPos) != 0)) {
             if (y < yPos) {
                 return castleLeft();
@@ -240,7 +241,7 @@ public class King extends Piece{
         int y = yPos;
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
-                if (i == 0 && j == 0) {
+                if ((i == 0 && j == 0) || outOfBoard(x, y)) {
                     continue;
                 }
                 if (canMove(x + i, y + j)) {

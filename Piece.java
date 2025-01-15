@@ -75,12 +75,18 @@ public class Piece {
         board.getPieces()[state[0]][state[1]] = this;
         xPos = state[0];
         yPos = state[1];
-        if (state[3] == 1) {
-            parent.setVisible(true);
-            visible = false;
-            board.getPieces()[xPos][yPos] = parent;
-            parent.unSimMove();
-        }
+//        if (state[3] == 1) {
+//            System.out.println("ran IMPORTANT");
+//            parent.setVisible(true);
+//            visible = false;
+//            board.getPieces()[xPos][yPos] = null;
+//            board.getPieces()[xPos][yPos] = parent;
+//            parent.setxPos(xPos);
+//            parent.setyPos(yPos);
+//            yPos = -1;
+//            xPos = -1;
+//            parent.unSimMove();
+//        }
 
         return true;
     }
@@ -92,6 +98,13 @@ public class Piece {
             return false;
         }
         board.noPassants();
+        move(x, y);
+
+        
+        return true;
+    }
+
+    public boolean move(int x, int y) {
         Piece targetPiece = board.getPieces()[x][y];
         if (targetPiece != null && targetPiece.isWhite() != this.isWhite) {
             board.removePiece(targetPiece);
