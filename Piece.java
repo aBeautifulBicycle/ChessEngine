@@ -1,4 +1,3 @@
-import java.util.Arrays;
 import java.util.Stack;
 
 import javax.swing.ImageIcon;
@@ -22,6 +21,7 @@ public class Piece {
     protected Stack<Piece> capturedPiece = new Stack<>();
     protected String pieceType;
     protected Piece parent;
+    protected double material;
     public Piece(ImageIcon icon, String name, int xPos, int yPos) {
         this.icon = icon;
         this.name = name;
@@ -168,6 +168,25 @@ public class Piece {
         return true;
     }
 
+    public boolean isACheck(int x, int y) {
+        int oldX = xPos;
+        int oldY = yPos;
+        xPos = x;
+        yPos = y;
+        if (isWhite && canAttack(board.getbKing().getxPos(), board.getbKing().getyPos())) {
+            xPos = oldX;
+            yPos = oldY;
+            return true;
+        } else if (!isWhite && canAttack(board.getwKing().getxPos(), board.getwKing().getyPos())) {
+            xPos = oldX;
+            yPos = oldY;
+            return true;
+        }
+        xPos = oldX;
+        yPos = oldY;
+        return false;
+    }
+
     public void highlightValidMoves() {
         int[][] validMoves = getValidMoves();
         int[][] highlightSquares = new int[validMoves.length + 1][];
@@ -304,5 +323,13 @@ public class Piece {
 
     public void setParent(Piece parent) {
         this.parent = parent;
+    }
+
+    public double getMaterial() {
+        return material;
+    }
+
+    public void setMaterial(double material) {
+        this.material = material;
     }
 }

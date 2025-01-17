@@ -6,6 +6,7 @@ public class Rook extends Piece{
     public Rook(ImageIcon icon, String name, int xPos, int yPos) {
         super(icon, name, xPos, yPos);
         pieceType = "Rook";
+        material = 5;
     }
 
     @Override

@@ -5,7 +5,8 @@ import javax.swing.ImageIcon;
 public class Bishop extends Piece{
     public Bishop(ImageIcon icon, String name, int xPos, int yPos) {
         super(icon, name, xPos, yPos);
-        pieceType = "Bishop";   
+        pieceType = "Bishop";
+        material = 3.25;  
     }
 
     @Override

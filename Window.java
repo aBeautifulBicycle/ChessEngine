@@ -5,7 +5,6 @@ import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 
 public class Window {
@@ -53,6 +52,28 @@ public class Window {
         window.setVisible(true);
         board = new Board(pieceGrid, squares, pieces);
         fenToPosition(Globals.TEST_FEN);
+//        System.out.println(board);
+//        long start = System.nanoTime();
+//        System.out.println(board.exploreAllPositions(board.isWhiteTurn(), 0, true));
+//        System.out.println(board);
+//        long maxOutTime = System.nanoTime() + 30_000_000_000L;
+//        board.evaluatePosition(board.isWhiteTurn(), Globals.MAX_SEARCH_DEPTH, maxOutTime);
+//        System.out.println(board);
+//        System.out.println(board.getNumMoves());
+//        board.setNumMoves(0);
+//        long end = System.nanoTime();
+//        System.out.println("Time taken (with check): " + (end - start) / 1_000_000 + "ms");
+//        
+//        start = System.nanoTime();
+//        System.out.println(board.exploreAllPositions(board.isWhiteTurn(), 0, false));
+//        System.out.println(board);
+//        maxOutTime = System.nanoTime() + 30_000_000_000L;
+//        board.evaluatePosition(board.isWhiteTurn(), Globals.MAX_SEARCH_DEPTH, maxOutTime);
+//        System.out.println(board);
+//        System.out.println(board.getNumMoves());
+//        board.setNumMoves(0);
+//        end = System.nanoTime();
+//        System.out.println("Time taken (no check): " + (end - start) / 1_000_000 + "ms");
 
 
     }
@@ -217,6 +238,7 @@ public class Window {
                                              board.setFullmoveClock(board.getFullmoveClock() + 1);
                                         }
                                         board.setHalfmoveClock(board.getHalfmoveClock() + 1);
+                                        System.out.println(board);
                                         int gameState = board.getGameState();
                                         if (gameState != 0) {
                                             gameOver = true;
@@ -257,6 +279,7 @@ public class Window {
                             }
                             
                         } else {
+                            System.out.println(board);
                             if (gameOver) {
                                 gameOver = false;
                                 fenToPosition(Globals.STARTING_BOARD_FEN);
@@ -288,7 +311,8 @@ public class Window {
                             
                             long start = System.nanoTime();
                             System.out.println(board.exploreAllPositions(board.isWhiteTurn(), 0, true));
-                            board.evaluatePosition(board.isWhiteTurn(), Globals.MAX_SEARCH_DEPTH);
+                            long maxOutTime = System.nanoTime() + 30_000_000_000L;
+                            System.out.println(board.evaluatePosition(board.isWhiteTurn(), Globals.MAX_SEARCH_DEPTH, maxOutTime));
                             System.out.println(board.getNumMoves());
                             board.setNumMoves(0);
                             long end = System.nanoTime();
@@ -296,7 +320,8 @@ public class Window {
                             
                             start = System.nanoTime();
                             System.out.println(board.exploreAllPositions(board.isWhiteTurn(), 0, false));
-                            board.evaluatePosition(board.isWhiteTurn(), Globals.MAX_SEARCH_DEPTH);
+                            maxOutTime = System.nanoTime() + 30_000_000_000L;
+                            System.out.println(board.evaluatePosition(board.isWhiteTurn(), Globals.MAX_SEARCH_DEPTH, maxOutTime));
                             System.out.println(board.getNumMoves());
                             board.setNumMoves(0);
                             end = System.nanoTime();

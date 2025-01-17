@@ -5,7 +5,8 @@ import javax.swing.ImageIcon;
 public class Knight extends Piece{
     public Knight(ImageIcon icon, String name, int xPos, int yPos) {
         super(icon, name, xPos, yPos);
-        pieceType = "Knight";   
+        pieceType = "Knight";
+        material = 3; 
     }
 
     @Override

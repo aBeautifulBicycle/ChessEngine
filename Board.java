@@ -1,6 +1,7 @@
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.Stack;
 
 import javax.swing.JPanel;
@@ -9,11 +10,16 @@ public class Board {
     public class Move {
         private int[] moveLocation;
         private Piece movePiece;
-        private int moveEvaluation;
-        public Move(int[] moveLocation, Piece movePiece, int moveEvaluation) {
+        private double moveEvaluation;
+        private double movePriority = 0;
+        public Move(int[] moveLocation, Piece movePiece) {
             this.moveLocation = moveLocation;
             this.movePiece = movePiece;
-            this.moveEvaluation = moveEvaluation;
+            if (movePiece.isWhite()) {
+                moveEvaluation = -100000;
+            } else {
+                moveEvaluation = 100000;
+            }
         }
         public int[] getMoveLocation() {
             return moveLocation;
@@ -29,13 +35,19 @@ public class Board {
         }
         @Override
         public String toString() {
-            return movePiece + " " + Arrays.toString(moveLocation) + " " + moveEvaluation;
+            return movePiece + " " + Arrays.toString(moveLocation) + " " + moveEvaluation + " " + movePriority;
         }
-        public int getMoveEvaluation() {
+        public double getMoveEvaluation() {
             return moveEvaluation;
         }
-        public void setMoveEvaluation(int moveEvaluation) {
+        public void setMoveEvaluation(double moveEvaluation) {
             this.moveEvaluation = moveEvaluation;
+        }
+        public double getMovePriority() {
+            return movePriority;
+        }
+        public void setMovePriority(double movePriority) {
+            this.movePriority = movePriority;
         }
     }
     private Piece[][] pieces;
@@ -94,7 +106,7 @@ public class Board {
                 return 1;
             }
         }
-        if (noMoves()) {
+        if (noMoves(whiteTurn)) {
             return 3;
         }
 
@@ -197,48 +209,161 @@ public class Board {
         return returnString;
     }
 
-    public void optimizeOrder(ArrayList<Move> moves) {
-        // TODO: optimize the order in which moves are searched (currently just goes top left to bottom right)
+    public boolean isEndgame() {
+        int pieceCount = 0;
+        for (Piece p : pieceList) {
+            if (p.getPieceType().equals("Queen")) {
+                return false;
+            }
+            if (!p.getPieceType().equals("Pawn")) {
+                pieceCount++;
+            }
+            if (p.getPieceType().equals("Rook")) {
+                pieceCount++;
+            }
+            if (pieceCount > 6) {
+                return false;
+            }
+        }
+
+        for (Piece p : newPieces) {
+            if (p.getPieceType().equals("Queen")) {
+                return false;
+            }
+            if (!p.getPieceType().equals("Pawn")) {
+                pieceCount++;
+            }
+            if (p.getPieceType().equals("Rook")) {
+                pieceCount++;
+            }
+            if (pieceCount > 6) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
-    public double evaluatePosition(boolean isWhite, int maxDepth) {
-        double eval = 0;
-//        int material = getMaterial(isWhite);
-//        int mobility = getMobility(isWhite);
-//        int kingSafety = getKingSafety(isWhite);
-//        int pawnStructure = getPawnStructure(isWhite);
-//        int kingCentroid = getKingCentroid(isWhite);
-//        int passedPawns = getPassedPawns(isWhite);
-//        int isolatedPawns = getIsolatedPawns(isWhite);
-//        int doubledPawns = getDoubledPawns(isWhite);
-//        int bishopPair = getBishopPair(isWhite);
-        if (maxDepth == 0) {
-            return evaluate(isWhite);
+    public void optimizeOrder(ArrayList<Move> moves) {
+        for (Move move : moves) { 
+            Piece movePiece = move.getMovePiece();
+            int x = move.getMoveLocation()[0];
+            int y = move.getMoveLocation()[1];
+            double movePrio = 0;
+            if (movePiece.isACheck(x, y)) {
+                movePrio += Globals.CHECK_PRIORITY;
+            }
+            if (pieces[x][y] != null && movePiece.isWhite() != pieces[x][y].isWhite() && !pieces[x][y].getPieceType().equals("King")) {
+                movePrio += Globals.CAPTURE_PRIORITY * pieces[x][y].getMaterial();
+            }
+            if (pieces[x][y] != null && movePiece.isWhite() != pieces[x][y].isWhite() && pieces[x][y].getMaterial() < movePiece.getMaterial()) {
+                movePrio += Globals.CAPTURE_PRIORITY * pieces[x][y].getMaterial();
+            }
+            if (movePiece.getPieceType().equals("Pawn") && (x == 0 || x == Globals.ROWS - 1)) {
+                movePrio += Globals.PROMOTION_PRIORITY;
+            }
+            if (isAttackedUnsafely(x, y, movePiece, movePiece.isWhite())) {
+                movePrio -= Globals.ATTACKED_DISADVANTAGE * movePiece.getMaterial();
+            } else if (!movePiece.getPieceType().equals("King") && isAttacked(x, y, !movePiece.isWhite(), movePiece)) {
+                movePrio += Globals.DEFENDED_PRIORITY;
+            }
+
+
+            if (movePiece.getPieceType().equals("King")) {
+                if (x - bKing.getxPos() + y - bKing.getyPos() < movePiece.getxPos() - bKing.getyPos() + movePiece.getxPos() - bKing.getxPos()) {
+                    movePrio += Globals.ENDGAME_KING_PROXIMITY_PRIORITY;
+                }
+            }
+            move.setMovePriority(movePrio);
         }
+        moves.sort((m1, m2) -> Double.compare(m2.getMovePriority(), m1.getMovePriority()));
+        
+    }
+
+    public Move evaluatePosition(boolean isWhite, int maxDepth, long maxTime) {
+        double eval = isWhite ? -100000 : 100000;
+        Move parentMove = null;
+    
+        if (!moveOrder.isEmpty()) {
+            parentMove = moveOrder.peek();
+        }
+        if (noMoves(isWhite)) {
+            if (parentMove == null) {
+                return null;
+            }
+            // Adjust for checkmate depth
+            parentMove.setMoveEvaluation(evaluateEnd(isWhite) + (isWhite ? -maxDepth : maxDepth));
+            return parentMove;
+        }
+        if (maxDepth == 0) {
+            if (parentMove == null) {
+                return null;
+            }
+            parentMove.setMoveEvaluation(evaluate(isWhite));
+            return parentMove;
+        }
+    
         ArrayList<Move> moves = getAllValidMoves(isWhite);
         optimizeOrder(moves);
-//        if (moves.size() == 0) {
-//            return evaluateEnd(isWhite);
-//        }
         
-
+    
+        Move bestMove = moves.get(0);
+        
+    
         for (Move move : moves) {
-            
             Piece p = move.getMovePiece();
-            
+            numMoves++;
             if (p.simMove(move.getMoveLocation()[0], move.getMoveLocation()[1])) {
                 moveOrder.push(move);
-                eval = evaluatePosition(!isWhite, maxDepth - 1);
+                Move evaluatedMove = evaluatePosition(!isWhite, maxDepth - 1, maxTime);
+                if (evaluatedMove != null) {
+                    if (isWhite) {
+                        // Prioritize quickest win for white
+                        if (evaluatedMove.getMoveEvaluation() > eval ||
+                            (evaluatedMove.getMoveEvaluation() == eval && maxDepth > 1)) {
+                            bestMove = move;
+                            
+                            eval = evaluatedMove.getMoveEvaluation();
+                            bestMove.setMoveEvaluation(eval);
+                        }
+                    } else {
+                        // Prioritize quickest win for black
+                        if (evaluatedMove.getMoveEvaluation() < eval ||
+                            (evaluatedMove.getMoveEvaluation() == eval && maxDepth > 1)) {
+                            bestMove = move;
+                            eval = evaluatedMove.getMoveEvaluation();
+                            bestMove.setMoveEvaluation(eval);
+                        }
+                    }
+                }
                 
+                if ((isWhite && eval >= 9998 + maxDepth) || (!isWhite && eval <= -9998 - maxDepth)) {
+                    // Checkmate detected, stop searching further
+                    p.unSimMove();
+                    moveOrder.pop();
+                    return bestMove;
+                }
+    
                 p.unSimMove();
                 moveOrder.pop();
             }
         }
-        return eval;
+        return bestMove;
     }
+    
 
     public double evaluate(boolean isWhite) {
-        return 0;
+        //        int material = getMaterial(isWhite);
+        //        int mobility = getMobility(isWhite);
+        //        int kingSafety = getKingSafety(isWhite);
+        //        int pawnStructure = getPawnStructure(isWhite);
+        //        int kingCentroid = getKingCentroid(isWhite);
+        //        int passedPawns = getPassedPawns(isWhite);
+        //        int isolatedPawns = getIsolatedPawns(isWhite);
+        //        int doubledPawns = getDoubledPawns(isWhite);
+        //        int bishopPair = getBishopPair(isWhite);
+        Random rand = new Random();
+        return rand.nextDouble() * 4 - 2;
     }
 
     public double evaluateEnd(boolean isWhite) {
@@ -299,7 +424,7 @@ public class Board {
             if (p.isVisible() && p.isWhite() == isWhite) {
                 int[][] valid = p.getValidMoves();
                 for (int[] movePos : valid) {
-                    Move move = new Move(movePos, p, 0);
+                    Move move = new Move(movePos, p);
                     moves.add(move);
                 }
                 
@@ -310,7 +435,7 @@ public class Board {
             if (p.isVisible() && p.isWhite() == isWhite) {
                 int[][] valid = p.getValidMoves();
                 for (int[] movePos : valid) {
-                    Move move = new Move(movePos, p, 0);
+                    Move move = new Move(movePos, p);
                     moves.add(move);
                 }
             } else if (!p.isVisible()) {
@@ -430,17 +555,17 @@ public class Board {
     }
 
     public boolean isCheckMate() {
-        if (!noMoves()) {
+        if (!noMoves(whiteTurn)) {
             return false;
         } 
         
         return inCheck(whiteTurn);
     }
 
-    public boolean noMoves() {
+    public boolean noMoves(boolean isWhite) {
         ArrayList<int[]> allValidMoves = new ArrayList<int[]>();
         for (Piece piece : pieceList) {
-            if (piece.isWhite() == whiteTurn && piece.isVisible()) {
+            if (piece.isWhite() == isWhite && piece.isVisible()) {
                 
                 int[][] validMoves = piece.getValidMoves();
                 for (int[] validMove : validMoves) {
@@ -454,7 +579,7 @@ public class Board {
             }
         }
         for (Piece piece : newPieces) {
-            if (piece.isWhite() == whiteTurn && piece.isVisible()) {
+            if (piece.isWhite() == isWhite && piece.isVisible()) {
                 int[][] validMoves = piece.getValidMoves();
                 for (int[] validMove : validMoves) {
                     allValidMoves.add(validMove);
@@ -558,15 +683,47 @@ public class Board {
         return false;
     }
 
-    public boolean isAttacked(int x, int y, boolean byWhite) {
+    public boolean isAttacked(int x, int y, boolean isWhite) {
         for (Piece p : pieceList) {
-            if (p.isVisible() && p.isWhite() != byWhite && p.canAttack(x, y)) {
+            if (p.isVisible() && p.isWhite() != isWhite && p.canAttack(x, y)) {
                 return true;
             }
         }
         for (Piece p : newPieces) {
-            if (p.isVisible() && p.isWhite() != byWhite && p.canAttack(x, y)) {
+            if (p.isVisible() && p.isWhite() != isWhite && p.canAttack(x, y)) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isAttacked(int x, int y, boolean isWhite, Piece excludedPiece) {
+        for (Piece p : pieceList) {
+            if (p.isVisible() && p.isWhite() != isWhite && !p.equals(excludedPiece) && p.canAttack(x, y)) {
+                return true;
+            }
+        }
+        for (Piece p : newPieces) {
+            if (p.isVisible() && p.isWhite() != isWhite && !p.equals(excludedPiece) && p.canAttack(x, y)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isAttackedUnsafely(int x, int y, Piece piece, boolean isWhite) {
+        for (Piece p : pieceList) {
+            if (p.isVisible() && p.getMaterial() < piece.getMaterial() && p.isWhite() != isWhite && p.canAttack(x, y)) {
+                return true;
+            } else if (p.isVisible() && p.getMaterial() >= piece.getMaterial() && p.isWhite() != isWhite && p.canAttack(x, y)) {
+                return !isAttacked(x, y, !isWhite, piece);
+            }
+        }
+        for (Piece p : newPieces) {
+            if (p.isVisible() && p.getMaterial() < piece.getMaterial() && p.isWhite() != isWhite && p.canAttack(x, y)) {
+                return true;
+            } else if (p.isVisible() && p.getMaterial() >= piece.getMaterial() && p.isWhite() != isWhite && p.canAttack(x, y)) {
+                return !isAttacked(x, y, !isWhite, piece);
             }
         }
         return false;

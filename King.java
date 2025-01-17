@@ -1,12 +1,12 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.swing.ImageIcon;
 
 public class King extends Piece{
     public King(ImageIcon icon, String name, int xPos, int yPos) {
         super(icon, name, xPos, yPos);
-        pieceType = "King"; 
+        pieceType = "King";
+        material = 1000;
     }
 
     @Override

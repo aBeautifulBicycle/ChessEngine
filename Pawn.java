@@ -1,58 +1,50 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.swing.ImageIcon;
 
 public class Pawn extends Piece{
-    private static int numCools = 1;
     public Pawn(ImageIcon icon, String name, int xPos, int yPos) {
         super(icon, name, xPos, yPos);
-        pieceType = "Pawn";   
+        pieceType = "Pawn";
+        material = 1;
     }
 
     @Override
     public boolean canMove(int x, int y) {
-        if (x == xPos && y == yPos) {
+        if (x == xPos && y == yPos || !inBoard(x, y)) {
             return false;
         }
-        
 
-        if (!inBoard(x, y)) {
-            return false;
-        }
+        int forward = isWhite() ? -1 : 1;
+        int startRow = isWhite() ? Globals.ROWS - 2 : 1;
+        
         Piece targetPiece = board.getPieces()[x][y];
-        if (y == yPos &&  targetPiece != null) {
+        
+        // Forward move
+        if (y == yPos) {
+            if (x == xPos + forward && targetPiece == null) {
+                return canMoveThroughCheck(x, y);
+            }
+            if (x == xPos + 2 * forward && xPos == startRow && 
+                board.getPieces()[xPos + forward][y] == null && targetPiece == null) {
+                return canMoveThroughCheck(x, y);
+            }
             return false;
         }
-        boolean canMove = false;
         
-        if (isWhite()) {
-            if (x == xPos - 1 && y == yPos) {
-                canMove = true;
-            } else if (x == xPos - 2 && y == yPos && xPos == Globals.ROWS - 2 && board.getPieces()[xPos - 1][y] == null) {
-                canMove = true;
-            } else if (x == xPos - 1 && Math.abs(yPos - y) == 1) {
-                if (targetPiece != null && targetPiece.isWhite() != this.isWhite())
-                    canMove = true;
-                if (board.getPieces()[xPos][y] != null && board.getPieces()[xPos][y].isWhite() != isWhite && board.getPieces()[xPos][y].isEnpassantable()) {
-                    canMove = true;
-                } 
+        // Diagonal capture or en passant
+        if (x == xPos + forward && Math.abs(y - yPos) == 1) {
+            if (targetPiece != null && targetPiece.isWhite() != isWhite()) {
+                return canMoveThroughCheck(x, y);
             }
-
-        } else {
-            if (x == xPos + 1 && y == yPos) {
-                canMove = true;
-            } else if (x == xPos + 2 && y == yPos && xPos == 1 && board.getPieces()[xPos + 1][y] == null) {
-                canMove = true;
-            } else if (x == xPos + 1 && Math.abs(yPos - y) == 1) {
-                if (targetPiece != null && targetPiece.isWhite() != this.isWhite())
-                    canMove = true;
-                if (board.getPieces()[xPos][y] != null && board.getPieces()[xPos][y].isWhite() != isWhite && board.getPieces()[xPos][y].isEnpassantable()) {
-                    canMove = true;
-                } 
+            Piece enPassantTarget = board.getPieces()[xPos][y];
+            if (enPassantTarget != null && enPassantTarget.isWhite() != isWhite() && 
+                enPassantTarget.isEnpassantable()) {
+                return canMoveThroughCheck(x, y);
             }
         }
-        return canMove && canMoveThroughCheck(x, y);
+        
+        return false;
     }
 
     @Override

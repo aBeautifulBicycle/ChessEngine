@@ -9,8 +9,9 @@ public class Globals {
     public static final int WIDTH = 800;
     public static final int HEIGHT = 800;
     public static final int OFFSET_AMOUNT = 10;
-    public static final String STARTING_BOARD_FEN = "rnbqkbnr/pppppppp/8/8/8/2N5/PPPPPPPP/R1BQKBNR w KQkq - 0 1";
+    public static final String STARTING_BOARD_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     public static final String TEST_FEN           = STARTING_BOARD_FEN;
+    public static final String TEST1_FEN          = "7k/Q3K3/8/8/8/8/8/8 w - - 0 1";
     public static final int MAX_SEARCH_DEPTH = 5;
 
     public static final Color BACKGROUND1 = new Color(0, 150, 150);
@@ -35,4 +36,15 @@ public class Globals {
     public static final ImageIcon WHITE_KING_PNG   = new ImageIcon(new ImageIcon("resources/png/pieces/wk.png").getImage().getScaledInstance(WIDTH / COLS - OFFSET_AMOUNT, HEIGHT / ROWS - OFFSET_AMOUNT, Image.SCALE_SMOOTH));
     
     public static final int NUM_PIECES = 10;
+
+    
+    public static final double CHECK_PRIORITY = 10;
+    public static final double CAPTURE_PRIORITY = 3;
+    public static final double PROMOTION_PRIORITY = 11;
+    public static final double ATTACKED_DISADVANTAGE = 4;
+    public static final double ENDGAME_KING_PROXIMITY_PRIORITY = 5;
+    public static final double DEFENDED_PRIORITY = 2;
+
+
+
 }
