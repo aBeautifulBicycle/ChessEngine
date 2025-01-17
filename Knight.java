@@ -84,5 +84,30 @@ public class Knight extends Piece{
         return validMoves.toArray(new int[validMoves.size()][]);
     }
 
+    @Override
+    public double getMGValue() {
+        return Globals.MG_VALUE[1];
+    }
+
+    @Override
+    public double getEGValue() {
+        return Globals.EG_VALUE[1];
+    }
+
+    @Override
+    public double getGamePhase() {
+        return 1;
+    }
+
+    @Override
+    public double getMGPieceTable(int index) {
+        return Globals.MG_KNIGHT_TABLE[index];
+    }
+
+    @Override
+    public double getEGPieceTable(int index) {
+        return Globals.EG_KNIGHT_TABLE[index];
+    }
+
 
 }

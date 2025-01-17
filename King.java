@@ -7,6 +7,7 @@ public class King extends Piece{
         super(icon, name, xPos, yPos);
         pieceType = "King";
         material = 1000;
+        canCastle = true;
     }
 
     @Override
@@ -21,11 +22,11 @@ public class King extends Piece{
         if (potTarget != null && potTarget.isWhite() == isWhite) {
             return false;
         }
-        boolean validMove = false;
-        if (!((Math.abs(x - xPos) <= 1 && Math.abs(y - yPos) <= 1) && Math.abs(x - xPos) + Math.abs(y - yPos) != 0)) {
+        boolean castleLeftPreliminaryCheck = canCastle && x == xPos && y == 0 || y == 1 || y == 2;
+        boolean castleRightPreliminaryCheck = canCastle && x == xPos && y == Globals.COLS - 1 || y == Globals.COLS - 2;
+        boolean validMoveNoCastle = ((Math.abs(x - xPos) <= 1 && Math.abs(y - yPos) <= 1) && Math.abs(x - xPos) + Math.abs(y - yPos) != 0);
+        if (!validMoveNoCastle && (!castleLeftPreliminaryCheck && !castleRightPreliminaryCheck)) {
             return false;
-        } else {
-            validMove = true;
         }
         
         // try moving the king there
@@ -40,14 +41,14 @@ public class King extends Piece{
         board.getPieces()[x][y] = previousPiece;
         board.getPieces()[getxPos()][getyPos()] = this;
         
-        if (validMove) {
+        if (validMoveNoCastle) {
             return true;
         }
         
-        if (canCastle && x == xPos && y == 0 || y == 1 || y == 2) {
+        if (castleLeftPreliminaryCheck) {
             return validCastleLeft(false);
         } 
-        if (canCastle && x == xPos && y == Globals.COLS - 1 || y == Globals.COLS - 2) {
+        if (castleRightPreliminaryCheck) {
             return validCastleRight(false);
         }
         return false;
@@ -139,6 +140,11 @@ public class King extends Piece{
                 Piece castleRook = board.getPieces()[xPos][yPos - 1];
                 board.getPieces()[xPos][yPos - 1] = null;
                 board.getPieces()[xPos][Globals.COLS - 1] = castleRook;
+                if (castleRook == null) {
+                    System.out.println(board);
+                    System.out.println(board.getMoveOrder());
+                    System.out.println("HOW!!");
+                }
                 castleRook.setCanCastle(true);
                 castleRook.setyPos(Globals.COLS - 1);
             }
@@ -169,6 +175,18 @@ public class King extends Piece{
         if (leftRook == null || leftRook.isWhite()!= isWhite() || !leftRook.isCanCastle() || board.getPieces()[xPos][1]!= null || board.getPieces()[xPos][2]!= null || board.getPieces()[xPos][3] != null) {
             return false;
         }
+        int x = xPos;
+        int y = yPos - 1;
+        Piece previousPiece = board.getPieces()[x][y];
+        board.getPieces()[x][y] = this;
+        board.getPieces()[getxPos()][getyPos()] = null;
+        if (board.isAttacked(x, y, isWhite)) {
+            board.getPieces()[x][y] = previousPiece;
+            board.getPieces()[getxPos()][getyPos()] = this;
+            return false;
+        }
+        board.getPieces()[x][y] = previousPiece;
+        board.getPieces()[getxPos()][getyPos()] = this;
         if (board.isAttacked(xPos, yPos - 2, isWhite) || board.isAttacked(xPos, yPos - 1, isWhite)) {
             return false;
         }
@@ -184,6 +202,18 @@ public class King extends Piece{
         if (rightRook == null || rightRook.isWhite()!= isWhite() || !rightRook.isCanCastle() || board.getPieces()[xPos][Globals.COLS - 2]!= null || board.getPieces()[xPos][Globals.COLS - 3] != null) {
             return false;
         }
+        int x = xPos;
+        int y = yPos + 1;
+        Piece previousPiece = board.getPieces()[x][y];
+        board.getPieces()[x][y] = this;
+        board.getPieces()[getxPos()][getyPos()] = null;
+        if (board.isAttacked(x, y, isWhite)) {
+            board.getPieces()[x][y] = previousPiece;
+            board.getPieces()[getxPos()][getyPos()] = this;
+            return false;
+        }
+        board.getPieces()[x][y] = previousPiece;
+        board.getPieces()[getxPos()][getyPos()] = this;
         if (board.isAttacked(xPos, yPos + 1, isWhite) || board.isAttacked(xPos, yPos + 2, isWhite)) {
             return false;
         }
@@ -237,27 +267,74 @@ public class King extends Piece{
     @Override
     public int[][] getValidMoves() {
         ArrayList<int[]> validMoves = new ArrayList<>();
-        int x = xPos;
-        int y = yPos;
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
-                if ((i == 0 && j == 0) || outOfBoard(x, y)) {
+                if ((i == 0 && j == 0) || outOfBoard(xPos, yPos)) {
                     continue;
                 }
-                if (canMove(x + i, y + j)) {
-                    validMoves.add(new int[]{x + i, y + j});
+                if (canMove(xPos + i, yPos + j)) {
+                    validMoves.add(new int[]{xPos + i, yPos + j});
                 }
             }
         }
         if (canCastle) {
             if (validCastleLeft(board.inCheck(isWhite()))) {
+                int x = xPos;
+                int y = yPos - 2;
+                boolean canMove = true;
+                Piece previousPiece = board.getPieces()[x][y];
+                board.getPieces()[x][y] = this;
+                board.getPieces()[getxPos()][getyPos()] = null;
+                if (board.isAttacked(x, y, isWhite)) {
+                    canMove = false;
+                }
+                board.getPieces()[x][y] = previousPiece;
+                board.getPieces()[getxPos()][getyPos()] = this;
+                if (canMove)
                 validMoves.add(new int[]{xPos, yPos - 2});
             }
             if (validCastleRight(board.inCheck(isWhite()))) {
+                int x = xPos;
+                int y = yPos + 2;
+                boolean canMove = true;
+                Piece previousPiece = board.getPieces()[x][y];
+                board.getPieces()[x][y] = this;
+                board.getPieces()[getxPos()][getyPos()] = null;
+                if (board.isAttacked(x, y, isWhite)) {
+                    canMove = false;
+                }
+                board.getPieces()[x][y] = previousPiece;
+                board.getPieces()[getxPos()][getyPos()] = this;
+                if (canMove)
                 validMoves.add(new int[]{xPos, yPos + 2});
             }
         }
         return validMoves.toArray(new int[validMoves.size()][]);
+    }
+
+    @Override
+    public double getMGValue() {
+        return Globals.MG_VALUE[5];
+    }
+
+    @Override
+    public double getEGValue() {
+        return Globals.EG_VALUE[5];
+    }
+
+    @Override
+    public double getGamePhase() {
+        return 0;
+    }
+
+    @Override
+    public double getMGPieceTable(int index) {
+        return Globals.MG_KING_TABLE[index];
+    }
+
+    @Override
+    public double getEGPieceTable(int index) {
+        return Globals.EG_KING_TABLE[index];
     }
     
 }

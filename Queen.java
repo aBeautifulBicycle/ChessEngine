@@ -189,5 +189,30 @@ public class Queen extends Piece {
         }
         return validMoves.toArray(new int[validMoves.size()][]);
     }
+
+    @Override
+    public double getMGValue() {
+        return Globals.MG_VALUE[4];
+    }
+
+    @Override
+    public double getEGValue() {
+        return Globals.EG_VALUE[4];
+    }
+
+    @Override
+    public double getGamePhase() {
+        return 4;
+    }
+
+    @Override
+    public double getMGPieceTable(int index) {
+        return Globals.MG_QUEEN_TABLE[index];
+    }
+
+    @Override
+    public double getEGPieceTable(int index) {
+        return Globals.EG_QUEEN_TABLE[index];
+    }
     
 }

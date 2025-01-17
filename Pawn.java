@@ -168,7 +168,7 @@ public class Pawn extends Piece{
         if (potPiece == null && y != yPos) {
             
             potPiece = board.getPieces()[xPos][y];
-            if (!board.getMoveOrder().peek().getMovePiece().equals(potPiece)) {
+            if (board.getMoveOrder().isEmpty() || !board.getMoveOrder().peek().getMovePiece().equals(potPiece)) {
                 return false;
             }
             state[2] = 2;
@@ -208,6 +208,7 @@ public class Pawn extends Piece{
             promotedPiece.setParent(this);
             board.getNewPieces().add(promotedPiece);
             promotedPiece.setBoard(board);
+            promotedPiece.setWhite(isWhite);
         }
         return true;
     }
@@ -218,7 +219,7 @@ public class Pawn extends Piece{
             return false;
         }
         int[] state = lastState.pop();
-        if (!board.getPieces()[xPos][yPos].equals(this)) {
+        if (board.getPieces()[xPos][yPos] != null && !board.getPieces()[xPos][yPos].equals(this)) {
             board.getPieces()[xPos][yPos].setVisible(false);
             board.getPieces()[xPos][yPos] = null;
             visible = true;

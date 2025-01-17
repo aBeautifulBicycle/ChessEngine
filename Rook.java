@@ -167,6 +167,31 @@ public class Rook extends Piece{
         return validMoves;
     }
 
+    @Override
+    public double getMGValue() {
+        return Globals.MG_VALUE[3];
+    }
+
+    @Override
+    public double getEGValue() {
+        return Globals.EG_VALUE[3];
+    }
+
+    @Override
+    public double getGamePhase() {
+        return 2;
+    }
+
+    @Override
+    public double getMGPieceTable(int index) {
+        return Globals.MG_ROOK_TABLE[index];
+    }
+
+    @Override
+    public double getEGPieceTable(int index) {
+        return Globals.EG_ROOK_TABLE[index];
+    }
+
     public boolean noPieceInWayX(int x) {
         if (outOfBoard(x, yPos)) {
             return false;

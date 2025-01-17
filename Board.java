@@ -7,49 +7,7 @@ import java.util.Stack;
 import javax.swing.JPanel;
 
 public class Board {
-    public class Move {
-        private int[] moveLocation;
-        private Piece movePiece;
-        private double moveEvaluation;
-        private double movePriority = 0;
-        public Move(int[] moveLocation, Piece movePiece) {
-            this.moveLocation = moveLocation;
-            this.movePiece = movePiece;
-            if (movePiece.isWhite()) {
-                moveEvaluation = -100000;
-            } else {
-                moveEvaluation = 100000;
-            }
-        }
-        public int[] getMoveLocation() {
-            return moveLocation;
-        }
-        public void setMoveLocation(int[] moveLocation) {
-            this.moveLocation = moveLocation;
-        }
-        public Piece getMovePiece() {
-            return movePiece;
-        }
-        public void setMovePiece(Piece movePiece) {
-            this.movePiece = movePiece;
-        }
-        @Override
-        public String toString() {
-            return movePiece + " " + Arrays.toString(moveLocation) + " " + moveEvaluation + " " + movePriority;
-        }
-        public double getMoveEvaluation() {
-            return moveEvaluation;
-        }
-        public void setMoveEvaluation(double moveEvaluation) {
-            this.moveEvaluation = moveEvaluation;
-        }
-        public double getMovePriority() {
-            return movePriority;
-        }
-        public void setMovePriority(double movePriority) {
-            this.movePriority = movePriority;
-        }
-    }
+    
     private Piece[][] pieces;
     private ArrayList<Piece> newPieces;
     private JPanel[][] squares;
@@ -61,6 +19,7 @@ public class Board {
     private ArrayList<String> fenList = new ArrayList<>();
     private Stack<Move> moveOrder = new Stack<>();
     private int numMoves = 0;
+    private Piece[][] cleanPieces;
     public Board(Piece[][] pieces, JPanel[][] squares, ArrayList<Piece> pieceList) {
         this.pieces = pieces;
         this.squares = squares;
@@ -299,7 +258,7 @@ public class Board {
             if (parentMove == null) {
                 return null;
             }
-            parentMove.setMoveEvaluation(evaluate(isWhite));
+            parentMove.setMoveEvaluation(evaluate());
             return parentMove;
         }
     
@@ -350,9 +309,79 @@ public class Board {
         }
         return bestMove;
     }
+
+    public Move evaluatePosition(boolean isWhite, int maxDepth, long maxTime, double alpha, double beta) {
+
+        double eval = isWhite ? -100000 : 100000;
+        Move parentMove = null;
+    
+        if (!moveOrder.isEmpty()) {
+            parentMove = moveOrder.peek();
+        }
+        if (noMoves(isWhite)) {
+            if (parentMove == null) {
+                return null;
+            }
+            // Adjust for checkmate depth
+            parentMove.setMoveEvaluation(evaluateEnd(isWhite) + (isWhite ? -maxDepth : maxDepth));
+            return parentMove;
+        }
+        if (maxDepth == 0) {
+            if (parentMove == null) {
+                return null;
+            }
+            parentMove.setMoveEvaluation(evaluate());
+            return parentMove;
+        }
+    
+        ArrayList<Move> moves = getAllValidMoves(isWhite);
+        optimizeOrder(moves);
+    
+        Move bestMove = moves.get(0);
+    
+        for (Move move : moves) {
+            Piece p = move.getMovePiece();
+            numMoves++;
+            if (p.simMove(move.getMoveLocation()[0], move.getMoveLocation()[1])) {
+                
+                moveOrder.push(move);
+                Move evaluatedMove = evaluatePosition(!isWhite, maxDepth - 1, maxTime, alpha, beta);
+                if (evaluatedMove != null) {
+                    double moveEval = evaluatedMove.getMoveEvaluation();
+                    if (isWhite) {
+                        // Maximize for white
+                        if (moveEval > eval) {
+                            eval = moveEval;
+                            bestMove = move;
+                            bestMove.setMoveEvaluation(eval);
+                        }
+                        alpha = Math.max(alpha, eval);
+                    } else {
+                        // Minimize for black
+                        if (moveEval < eval) {
+                            eval = moveEval;
+                            bestMove = move;
+                            bestMove.setMoveEvaluation(eval);
+                        }
+                        beta = Math.min(beta, eval);
+                    }
+                }
+    
+                p.unSimMove();
+                moveOrder.pop();
+    
+                // Alpha-beta pruning: Cut off further exploration
+                if (alpha >= beta) {
+                    break;
+                }
+            }
+        }
+        return bestMove;
+    }
+    
     
 
-    public double evaluate(boolean isWhite) {
+    public double evaluate() {
         //        int material = getMaterial(isWhite);
         //        int mobility = getMobility(isWhite);
         //        int kingSafety = getKingSafety(isWhite);
@@ -362,8 +391,41 @@ public class Board {
         //        int isolatedPawns = getIsolatedPawns(isWhite);
         //        int doubledPawns = getDoubledPawns(isWhite);
         //        int bishopPair = getBishopPair(isWhite);
-        Random rand = new Random();
-        return rand.nextDouble() * 4 - 2;
+        double mgScore = 0;
+        double egScore = 0;
+        double gamePhase = 0;
+        for (Piece p : pieceList) {
+            if (!p.isVisible()) {
+                continue;
+            }
+            double[] eval = p.getEvaluation();
+            if (p.isWhite()) {
+                mgScore += eval[0];
+                egScore += eval[1];
+            } else {
+                mgScore -= eval[0];
+                egScore -= eval[1];
+            }
+            gamePhase += eval[2];
+        }
+
+        for (Piece p : newPieces) {
+            if (!p.isVisible()) {
+                continue;
+            }
+            double[] eval = p.getEvaluation();
+            if (p.isWhite()) {
+                mgScore += eval[0];
+                egScore += eval[1];
+            } else {
+                mgScore -= eval[0];
+                egScore -= eval[1];
+            }
+            gamePhase += eval[2];
+        }
+        if (gamePhase > 24) gamePhase = 24;
+        double egPhase = 24 - gamePhase;
+        return (mgScore * gamePhase + egScore * egPhase) / 24;
     }
 
     public double evaluateEnd(boolean isWhite) {
@@ -381,7 +443,6 @@ public class Board {
         if (moves.size() == 0) {
             return 0;
         }
-        optimizeOrder(moves);
         if (depth == 0) {
             moveOrder = new Stack<>();
         }
@@ -685,6 +746,8 @@ public class Board {
 
     public boolean isAttacked(int x, int y, boolean isWhite) {
         for (Piece p : pieceList) {
+            if (p.getxPos() == 6 && p.getyPos() == 6) {
+            }
             if (p.isVisible() && p.isWhite() != isWhite && p.canAttack(x, y)) {
                 return true;
             }
@@ -831,5 +894,13 @@ public class Board {
 
     public void setNumMoves(int numMoves) {
         this.numMoves = numMoves;
+    }
+
+    public Piece[][] getCleanPieces() {
+        return cleanPieces;
+    }
+
+    public void setCleanPieces(Piece[][] cleanPieces) {
+        this.cleanPieces = cleanPieces;
     }
 }

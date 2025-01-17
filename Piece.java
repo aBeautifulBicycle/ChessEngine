@@ -167,6 +167,41 @@ public class Piece {
         }
         return true;
     }
+    public double[] getEvaluation() {
+        double mg_score = getMGValue();
+        double eg_score = getEGValue();
+        if (isWhite) {
+            int index = (xPos) * (Globals.ROWS - 1) + yPos;
+            mg_score += getMGPieceTable(index);
+            eg_score += getEGPieceTable(index);
+        } else {
+            int index = (Globals.ROWS - 1 - xPos) * (Globals.ROWS - 1) + yPos;
+            mg_score += getMGPieceTable(index);
+            eg_score += getEGPieceTable(index);
+        }
+        double gamePhase = getGamePhase();
+        return new double[]{mg_score, eg_score, gamePhase};
+    }
+
+    public double getMGValue() {
+        return 0;
+    }
+
+    public double getEGValue() {
+        return 0;
+    }
+
+    public double getGamePhase() {
+        return 0;
+    }
+
+    public double getMGPieceTable(int index) {
+        return Globals.MG_PAWN_TABLE[index];
+    }
+
+    public double getEGPieceTable(int index) {
+        return Globals.EG_PAWN_TABLE[index];
+    }
 
     public boolean isACheck(int x, int y) {
         int oldX = xPos;

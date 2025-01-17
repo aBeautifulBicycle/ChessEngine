@@ -53,6 +53,32 @@ public class Bishop extends Piece{
         }
         return true;
     }
+
+    @Override
+    public double getMGValue() {
+        return Globals.MG_VALUE[2];
+    }
+
+    @Override
+    public double getEGValue() {
+        return Globals.EG_VALUE[2];
+    }
+
+    @Override
+    public double getGamePhase() {
+        return 1;
+    }
+
+    @Override
+    public double getMGPieceTable(int index) {
+        return Globals.MG_BISHOP_TABLE[index];
+    }
+
+    @Override
+    public double getEGPieceTable(int index) {
+        return Globals.EG_BISHOP_TABLE[index];
+    }
+
     public boolean outOfBoard(int x, int y) {
         return x > Globals.COLS - 1 || y > Globals.ROWS - 1 || x < 0 || y < 0;
     }
