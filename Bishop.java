@@ -6,7 +6,7 @@ public class Bishop extends Piece{
     public Bishop(ImageIcon icon, String name, int xPos, int yPos) {
         super(icon, name, xPos, yPos);
         pieceType = "Bishop";
-        material = 3.25;  
+        material = 3.25; 
     }
 
     @Override
@@ -103,7 +103,7 @@ public class Bishop extends Piece{
     }
 
     @Override
-    public int[][] getValidMoves() {
+    public ArrayList<int[]> calculateValidMoves() {
         ArrayList<int[]> validMoves = new ArrayList<>();
         boolean inWay1 = false;
         boolean inWay2 = false;
@@ -127,7 +127,7 @@ public class Bishop extends Piece{
                 validMoves.add(new int[]{xPos - i, yPos - i});
             }
         }
-        return validMoves.toArray(new int[validMoves.size()][]);
+        return validMoves;
     }
     
 }

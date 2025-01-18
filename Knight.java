@@ -55,7 +55,7 @@ public class Knight extends Piece{
     }
 
     @Override
-    public int[][] getValidMoves() {
+    public ArrayList<int[]> calculateValidMoves() {
         ArrayList<int[]> validMoves = new ArrayList<>();
         if (canMove(xPos + 1, yPos + 2)) {
             validMoves.add(new int[]{xPos + 1, yPos + 2});
@@ -81,7 +81,7 @@ public class Knight extends Piece{
         if (canMove(xPos - 2, yPos - 1)) {
             validMoves.add(new int[]{xPos - 2, yPos - 1});
         }
-        return validMoves.toArray(new int[validMoves.size()][]);
+        return validMoves;
     }
 
     @Override

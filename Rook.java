@@ -126,7 +126,7 @@ public class Rook extends Piece{
     }
 
     @Override
-    public int[][] getValidMoves() {
+    public ArrayList<int[]> calculateValidMoves() {
         ArrayList<int[]> moves = new ArrayList<int[]>();
         int x = xPos;
         int y = yPos;
@@ -159,12 +159,8 @@ public class Rook extends Piece{
                 break;
             }
         }
-        int[][] validMoves = new int[moves.size()][];
-        for (int i = 0; i < moves.size(); i++) {
-            validMoves[i] = moves.get(i);
-        }
         
-        return validMoves;
+        return moves;
     }
 
     @Override

@@ -1,13 +1,13 @@
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-
-
+import javax.swing.SwingUtilities;
 
 import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 
@@ -56,28 +56,23 @@ public class Window {
         window.setVisible(true);
         board = new Board(pieceGrid, squares, pieces);
         fenToPosition(Globals.TEST_FEN, gameType);
-//        System.out.println(board);
-//        long start = System.nanoTime();
-//        System.out.println(board.exploreAllPositions(board.isWhiteTurn(), 0, true));
-//        System.out.println(board);
-//        long maxOutTime = System.nanoTime() + 30_000_000_000L;
-//        board.evaluatePosition(board.isWhiteTurn(), Globals.MAX_SEARCH_DEPTH, maxOutTime);
-//        System.out.println(board);
-//        System.out.println(board.getNumMoves());
-//        board.setNumMoves(0);
-//        long end = System.nanoTime();
-//        System.out.println("Time taken (with check): " + (end - start) / 1_000_000 + "ms");
-//        
-//        start = System.nanoTime();
-//        System.out.println(board.exploreAllPositions(board.isWhiteTurn(), 0, false));
-//        System.out.println(board);
-//        maxOutTime = System.nanoTime() + 30_000_000_000L;
-//        board.evaluatePosition(board.isWhiteTurn(), Globals.MAX_SEARCH_DEPTH, maxOutTime);
-//        System.out.println(board);
-//        System.out.println(board.getNumMoves());
-//        board.setNumMoves(0);
-//        end = System.nanoTime();
-//        System.out.println("Time taken (no check): " + (end - start) / 1_000_000 + "ms");
+        if (gameType == 2) {
+            engineMakeMove(Globals.MAX_SEARCH_DEPTH);
+            addNewPiecesToBoard();
+        }
+        if (gameType == 3) {
+            long start = System.nanoTime();
+            int maxDepth = Globals.MAX_SEARCH_DEPTH;
+            while (!gameOver) {
+                engineMakeMove(maxDepth);
+                addNewPiecesToBoard();
+                
+            }
+            long end = System.nanoTime();
+            System.out.println("Time taken: " + (end - start) / 1_000_000 + "ms");
+            
+            
+        }
 
 
     }
@@ -220,38 +215,51 @@ public class Window {
                 board.getSquares()[col][row].addMouseListener(new MouseAdapter() {
                     @Override
                     public void mousePressed(MouseEvent e) {
-                        if (gameType == 0) {
-                            if (processInput(finalRow, finalCol, e, gameType)) {
-                                board.getFenList().add(board.getFen());
-                            }
-                            addNewPiecesToBoard();
-                        } else if (gameType == 1 && board.isWhiteTurn()) {
-                            if (processInput(finalRow, finalCol, e, gameType)) {
-                                board.getFenList().add(board.getFen());
-                                engineMakeMove();
-                            }
-                            addNewPiecesToBoard();
-                        } else if (gameType == 2 && !board.isWhiteTurn()) {
-                            if (processInput(finalRow, finalCol, e, gameType)) {
-                                board.getFenList().add(board.getFen());
-                                engineMakeMove();
-                            }
-                            addNewPiecesToBoard();
-                            
+                    if (gameType == 0) {
+                        processInput(finalRow, finalCol, e, gameType);
+                        addNewPiecesToBoard();
+                    } else if (gameType == 1 && board.isWhiteTurn()) {
+                        if (processInput(finalRow, finalCol, e, gameType)) {
+                            window.repaint();
+
+                            // Run the computer's move on a separate thread
+                            new Thread(() -> {
+                                engineMakeMove(Globals.MAX_SEARCH_DEPTH);
+                                addNewPiecesToBoard();
+                                SwingUtilities.invokeLater(window::repaint);
+                            }).start();
+                        }
+                    } else if (gameType == 2 && !board.isWhiteTurn()) {
+                        if (processInput(finalRow, finalCol, e, gameType)) {
+                            window.repaint();
+
+                            // Run the computer's move on a separate thread
+                            new Thread(() -> {
+                                engineMakeMove(Globals.MAX_SEARCH_DEPTH);
+                                addNewPiecesToBoard();
+                                SwingUtilities.invokeLater(window::repaint);
+                            }).start();
                         }
                     }
+                }
                 });
             }
         }
     }
 
-    public void engineMakeMove() {
+    public void engineMakeMove(int maxDepth) {
+        window.repaint();
         Piece[][] cleanBoard = new Piece[board.getPieces().length][];
         for (int i = 0; i < cleanBoard.length; i++) {
             cleanBoard[i] = board.getPieces()[i].clone();
         }
-        System.out.println(Arrays.deepToString(cleanBoard));
-        Move move = board.evaluatePosition(board.isWhiteTurn(), Globals.MAX_SEARCH_DEPTH, 0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        Move move = board.evaluatePosition(board.isWhiteTurn(), maxDepth, 0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        
+        
+        System.out.println("took " + board.getNumMoves() + " moves to get result");
+        board.setNumMoves(0);
+        board.setVisitedPositions(new HashSet<>());
+        
         board.setPieces(cleanBoard);
         if (move == null) {
             return;
@@ -267,6 +275,7 @@ public class Window {
                 }
                 Move randomMove = moves.get(rand.nextInt(moves.size()));
                 if (moveAttempt(randomMove)) {
+                    System.out.println("Doing random move " + randomMove + " instead");
                     break;
                 }
             }
@@ -317,8 +326,10 @@ public class Window {
             if (gameState != 0) {
                 gameOver = true;
                 printGameState(gameState);
+                
             }
             printBoardState();
+            board.getFenList().add(board.getFen());
 
             
         }
@@ -341,6 +352,8 @@ public class Window {
                 gameOver = true;
                 printGameState(gameState);
             }
+            printBoardState();
+            board.getFenList().add(board.getFen());
 
             
         }
@@ -373,6 +386,7 @@ public class Window {
         } else if (gameState == 0) {
             System.out.println("Game is still in progress.");
         }
+        System.out.println(board.getNumMoves());
     }
 
     public void processRemoval() {

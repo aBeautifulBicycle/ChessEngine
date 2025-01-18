@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Stack;
 
 import javax.swing.ImageIcon;
@@ -22,6 +23,7 @@ public class Piece {
     protected String pieceType;
     protected Piece parent;
     protected double material;
+    protected ArrayList<int[]> validMoves = new ArrayList<>();
     public Piece(ImageIcon icon, String name, int xPos, int yPos) {
         this.icon = icon;
         this.name = name;
@@ -32,6 +34,23 @@ public class Piece {
         label = new JLabel(icon);
         isWhite = true;
         enpassantable = false;
+    }
+
+    public Piece(ImageIcon icon, String name, int xPos, int yPos, Board board) {
+        this.icon = icon;
+        this.name = name;
+        this.xPos = xPos;
+        this.yPos = yPos;
+        this.board = board;
+        visible = false;
+        selected = false;
+        label = new JLabel(icon);
+        isWhite = true;
+        enpassantable = false;
+    }
+
+    public void updateValidMoves() {
+        validMoves = calculateValidMoves();
     }
 
     public boolean simMove(int x, int y) {
@@ -109,6 +128,7 @@ public class Piece {
         if (targetPiece != null && targetPiece.isWhite() != this.isWhite) {
             board.removePiece(targetPiece);
         }
+        
         board.movePiece(this, x, y);
         board.toggleTurn();
 
@@ -158,8 +178,8 @@ public class Piece {
         return 0;
     }
 
-    public int[][] getValidMoves() {
-        return new int[][]{{0, 0}};
+    public ArrayList<int[]> calculateValidMoves() {
+        return new ArrayList<>();
     }
     public boolean inBoard(int x, int y) {
         if (x >= Globals.ROWS || y >= Globals.COLS || x < 0 || y < 0) {
@@ -170,17 +190,67 @@ public class Piece {
     public double[] getEvaluation() {
         double mg_score = getMGValue();
         double eg_score = getEGValue();
+        int index;
         if (isWhite) {
-            int index = (xPos) * (Globals.ROWS - 1) + yPos;
-            mg_score += getMGPieceTable(index);
-            eg_score += getEGPieceTable(index);
+            index = (xPos) * (Globals.ROWS - 1) + yPos;
         } else {
-            int index = (Globals.ROWS - 1 - xPos) * (Globals.ROWS - 1) + yPos;
-            mg_score += getMGPieceTable(index);
-            eg_score += getEGPieceTable(index);
+            index = (Globals.ROWS - 1 - xPos) * (Globals.ROWS - 1) + yPos;
         }
+        double[] extra = pieceSpecificEvaluation();
+        mg_score += getMGPieceTable(index) + extra[0];
+        eg_score += getEGPieceTable(index) + extra[1];
+
+//        if (board.isAttackedUnsafely(xPos, yPos, this, isWhite)) {
+//            mg_score -= getMGValue() / 2;
+//            eg_score -= getEGValue() * 0.75;
+//        } 
+//        if (board.isAttacked(xPos, yPos, !isWhite, this)) {
+//            mg_score += getMGValue() / 2;
+//            eg_score += getEGValue() * 0.75;
+//        }
         double gamePhase = getGamePhase();
         return new double[]{mg_score, eg_score, gamePhase};
+    }
+
+    
+    public double[] pieceSpecificEvaluation() {
+        return new double[]{0, 0};
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass()!= o.getClass()) {
+            return false;
+        }
+        Piece piece = (Piece) o;
+        if (xPos!= piece.xPos || yPos!= piece.yPos || isWhite!= piece.isWhite) {
+            return false;
+        }
+        if (canCastle!= piece.canCastle) {
+            return false;
+        }
+        if (enpassantable!= piece.enpassantable) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = getPieceNum();
+        hash = 7 * hash + xPos;
+        hash = 9 * hash + yPos;
+        hash = 9 * hash + (isWhite? 1 : 0);
+        hash = 3 * hash + (canCastle? 1 : 0);
+        hash = 3 * hash + (enpassantable? 1 : 0);
+        return hash;
+    }
+
+    public int getPieceNum() {
+        return 0;
     }
 
     public double getMGValue() {
@@ -223,11 +293,11 @@ public class Piece {
     }
 
     public void highlightValidMoves() {
-        int[][] validMoves = getValidMoves();
-        int[][] highlightSquares = new int[validMoves.length + 1][];
+        ArrayList<int[]> validMoves = calculateValidMoves();
+        int[][] highlightSquares = new int[validMoves.size() + 1][];
         highlightSquares[0] = new int[]{xPos, yPos};
-        for (int i = 0; i < validMoves.length; i++) {
-            highlightSquares[i + 1] = new int[]{validMoves[i][0], validMoves[i][1]};
+        for (int i = 0; i < validMoves.size(); i++) {
+            highlightSquares[i + 1] = new int[]{validMoves.get(i)[0], validMoves.get(i)[1]};
         }
         highlightedSquares = highlightSquares;
         board.highlightSquares(highlightSquares);
@@ -366,5 +436,13 @@ public class Piece {
 
     public void setMaterial(double material) {
         this.material = material;
+    }
+
+    public ArrayList<int[]> getValidMoves() {
+        return validMoves;
+    }
+
+    public void setValidMoves(ArrayList<int[]> validMoves) {
+        this.validMoves = validMoves;
     }
 }

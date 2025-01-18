@@ -95,19 +95,35 @@ public class King extends Piece{
             potPiece.setVisible(false);
             
         }
-        lastState.push(state);
-        board.getPieces()[xPos][yPos] = null;
-        board.getPieces()[x][y] = this;
+        
         if (Math.abs(y - yPos) == 2) {
             state[4] = 1;
             if (yPos - y == 2) {
                 Piece castleRook = board.getPieces()[xPos][0];
+                if (castleRook == null) {
+                    // should never happen... but it does D:
+                    if (potPiece != null && potPiece.isWhite() != isWhite) {
+                        capturedPiece.pop();
+                        potPiece.setVisible(true);
+                        canCastle = state[5] == 1;
+                    }
+                    return false;
+                }
                 board.getPieces()[xPos][0] = null;
                 board.getPieces()[xPos][y + 1] = castleRook;
                 castleRook.setyPos(y + 1);
                 castleRook.setCanCastle(false);
             } else {
                 Piece castleRook = board.getPieces()[xPos][Globals.COLS - 1];
+                if (castleRook == null) {
+                    // should never happen... but it does D:
+                    if (potPiece != null && potPiece.isWhite() != isWhite) {
+                        capturedPiece.pop();
+                        potPiece.setVisible(true);
+                        canCastle = state[5] == 1;
+                    }
+                    return false;
+                }
                 board.getPieces()[xPos][Globals.COLS - 1] = null;
                 board.getPieces()[xPos][y - 1] = castleRook;
                 castleRook.setyPos(y - 1);
@@ -115,6 +131,9 @@ public class King extends Piece{
             }
             
         }
+        lastState.push(state);
+        board.getPieces()[xPos][yPos] = null;
+        board.getPieces()[x][y] = this;
 //        this.setCanCastle(false);
         xPos = x;
         yPos = y;
@@ -236,8 +255,9 @@ public class King extends Piece{
         if (targetPiece != null && targetPiece.isWhite() != this.isWhite) {
             board.removePiece(targetPiece);
         }
-        board.movePiece(this, x, y);
         canCastle = false;
+        board.movePiece(this, x, y);
+        
         board.toggleTurn();
         return true;
     }
@@ -265,7 +285,7 @@ public class King extends Piece{
     }
 
     @Override
-    public int[][] getValidMoves() {
+    public ArrayList<int[]> calculateValidMoves() {
         ArrayList<int[]> validMoves = new ArrayList<>();
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
@@ -309,7 +329,7 @@ public class King extends Piece{
                 validMoves.add(new int[]{xPos, yPos + 2});
             }
         }
-        return validMoves.toArray(new int[validMoves.size()][]);
+        return validMoves;
     }
 
     @Override

@@ -84,7 +84,7 @@ public class Pawn extends Piece{
     }
 
     @Override
-    public int[][] getValidMoves() {
+    public ArrayList<int[]> calculateValidMoves() {
         ArrayList<int[]> moves = new ArrayList<int[]>();
         int x = xPos;
         int y = yPos;
@@ -115,12 +115,8 @@ public class Pawn extends Piece{
                 moves.add(new int[]{x + 1, y + 1});
             }
         }
-        int[][] validMoves = new int[moves.size()][];
-        for (int i = 0; i < moves.size(); i++) {
-            validMoves[i] = moves.get(i);
-        }
         
-        return validMoves;
+        return moves;
     }
 
     @Override
@@ -136,7 +132,6 @@ public class Pawn extends Piece{
             board.removePiece(board.getPieces()[xPos][y]);
             
         }
-        
         board.movePiece(this, x, y);
         if (xPos == 0 || xPos == Globals.ROWS - 1) {
             promote();

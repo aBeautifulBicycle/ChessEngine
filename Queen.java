@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.swing.ImageIcon;
 
@@ -7,6 +8,36 @@ public class Queen extends Piece {
         super(icon, name, xPos, yPos);
         pieceType = "Queen";
         material = 9;
+    }
+
+    public boolean canMoveIgnoreSide(int x, int y) {
+        if (x == xPos && y == yPos) {
+            return false;
+        }
+        if (outOfBoard(x, y)) {
+            return false;
+        }
+        int maxDif = Math.max(Math.abs(xPos - x), Math.abs(yPos - y));
+        if (!(x == xPos || y == yPos || Math.abs(x - xPos) == Math.abs(y - yPos) || (Math.pow(Math.abs(xPos - x), 2) + Math.pow(Math.abs(yPos - y), 2) == 5 && maxDif == 2))) {
+            return false;
+        }
+
+        if (inWay(x, y)) {
+            return false;
+        }
+        if (Math.abs(x - xPos) == Math.abs(y - yPos)) {
+            return true;
+        }
+        if (x == xPos && noPieceInWayY(y)) {
+            return true;
+        }
+        if (y == yPos && noPieceInWayX(x)) {
+            return true;
+        }
+        if (Math.pow(Math.abs(xPos - x), 2) + Math.pow(Math.abs(yPos - y), 2) == 5 && maxDif == 2) {
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -134,7 +165,7 @@ public class Queen extends Piece {
     }
 
      @Override
-    public int[][] getValidMoves() {
+    public ArrayList<int[]> calculateValidMoves() {
         ArrayList<int[]> validMoves = new ArrayList<>();
         boolean inWay1 = false;
         boolean inWay2 = false;
@@ -187,7 +218,88 @@ public class Queen extends Piece {
                 break;
             }
         }
-        return validMoves.toArray(new int[validMoves.size()][]);
+        return validMoves;
+    }
+
+    public ArrayList<int[]> getValidMovesIncludeSameSide() {
+        ArrayList<int[]> validMoves = new ArrayList<>();
+        boolean inWay1 = false;
+        boolean inWay2 = false;
+        boolean inWay3 = false;
+        boolean inWay4 = false;
+        for (int i = 0; i < Globals.COLS; i++) {
+            inWay1 = inWay1 || inWay(xPos + i, yPos + i);
+            if (!inWay1 && canMoveIgnoreSide(xPos + i, yPos + i)) {
+                validMoves.add(new int[]{xPos + i, yPos + i});
+            }
+            inWay2 = inWay2 || inWay(xPos - i, yPos + i);
+            if (!inWay2 && canMoveIgnoreSide(xPos - i, yPos + i)) {
+                validMoves.add(new int[]{xPos - i, yPos + i});
+            }
+            inWay3 = inWay3 || inWay(xPos + i, yPos - i);
+            if (!inWay3 && canMoveIgnoreSide(xPos + i, yPos - i)) {
+                validMoves.add(new int[]{xPos + i, yPos - i});
+            }
+            inWay4 = inWay4 || inWay(xPos - i, yPos - i);
+            if (!inWay4 && canMoveIgnoreSide(xPos - i, yPos - i)) {
+                validMoves.add(new int[]{xPos - i, yPos - i});
+            }
+        }
+        for (int i = xPos + 1; i < Globals.COLS; i++) {
+            if (canMoveIgnoreSide(i, yPos)) {
+                validMoves.add(new int[]{i, yPos});
+            } else if (!noPieceInWayX(i)) {
+                break;
+            }
+        }
+        for (int i = xPos - 1; i >= 0; i--) {
+            if (canMoveIgnoreSide(i, yPos)) {
+                validMoves.add(new int[]{i, yPos});
+            } else if (!noPieceInWayX(i)) {
+                break;
+            }
+        }
+        for (int i = yPos + 1; i < Globals.ROWS; i++) {
+            if (canMoveIgnoreSide(xPos, i)) {
+                validMoves.add(new int[]{xPos, i});
+            } else if (!noPieceInWayY(i)) {
+                break;
+            }
+        }
+
+        for (int i = yPos - 1; i >= 0; i--) {
+            if (canMoveIgnoreSide(xPos, i)) {
+                validMoves.add(new int[]{xPos, i});
+            } else if (!noPieceInWayY(i)) {
+                break;
+            }
+        }
+
+        if (canMoveIgnoreSide(xPos + 1, yPos + 2)) {
+            validMoves.add(new int[]{xPos + 1, yPos + 2});
+        }
+        if (canMoveIgnoreSide(xPos + 1, yPos - 2)) {
+            validMoves.add(new int[]{xPos + 1, yPos - 2});
+        }
+        if (canMoveIgnoreSide(xPos - 1, yPos + 2)) {
+            validMoves.add(new int[]{xPos - 1, yPos + 2});
+        }
+        if (canMoveIgnoreSide(xPos - 1, yPos - 2)) {
+            validMoves.add(new int[]{xPos - 1, yPos - 2});
+        }
+        if (canMoveIgnoreSide(xPos + 2, yPos + 1)) {
+            validMoves.add(new int[]{xPos + 2, yPos + 1});
+        }
+        if (canMoveIgnoreSide(xPos + 2, yPos - 1)) {
+            validMoves.add(new int[]{xPos + 2, yPos - 1});
+        }
+        if (canMoveIgnoreSide(xPos - 2, yPos + 1)) {
+            validMoves.add(new int[]{xPos - 2, yPos + 1});
+        }
+        if (canMoveIgnoreSide(xPos - 2, yPos - 1)) {
+            validMoves.add(new int[]{xPos - 2, yPos - 1});
+        }
+        return validMoves;
     }
 
     @Override

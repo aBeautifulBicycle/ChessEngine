@@ -1,13 +1,16 @@
 import java.awt.Color;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.Stack;
 
 import javax.swing.JPanel;
 
 public class Board {
-    
+    private HashSet<List<Piece>> visitedPositions = new HashSet<>();
     private Piece[][] pieces;
     private ArrayList<Piece> newPieces;
     private JPanel[][] squares;
@@ -227,8 +230,8 @@ public class Board {
                 movePrio += Globals.DEFENDED_PRIORITY;
             }
 
-
-            if (movePiece.getPieceType().equals("King")) {
+            
+            if (movePiece.getPieceType().equals("King") && isEndgame()) {
                 if (x - bKing.getxPos() + y - bKing.getyPos() < movePiece.getxPos() - bKing.getyPos() + movePiece.getxPos() - bKing.getxPos()) {
                     movePrio += Globals.ENDGAME_KING_PROXIMITY_PRIORITY;
                 }
@@ -310,8 +313,14 @@ public class Board {
         return bestMove;
     }
 
-    public Move evaluatePosition(boolean isWhite, int maxDepth, long maxTime, double alpha, double beta) {
 
+
+    public Move evaluatePosition(boolean isWhite, int maxDepth, long maxTime, double alpha, double beta) {
+        if (numMoves > 10_000_000) {
+            maxDepth -= numMoves / 10_000_000;
+        }
+        
+        
         double eval = isWhite ? -100000 : 100000;
         Move parentMove = null;
     
@@ -326,7 +335,7 @@ public class Board {
             parentMove.setMoveEvaluation(evaluateEnd(isWhite) + (isWhite ? -maxDepth : maxDepth));
             return parentMove;
         }
-        if (maxDepth == 0) {
+        if (maxDepth <= 0) {
             if (parentMove == null) {
                 return null;
             }
@@ -483,7 +492,7 @@ public class Board {
         ArrayList<Move> moves = new ArrayList<>();
         for (Piece p : pieceList) {
             if (p.isVisible() && p.isWhite() == isWhite) {
-                int[][] valid = p.getValidMoves();
+                ArrayList<int[]> valid = p.calculateValidMoves();
                 for (int[] movePos : valid) {
                     Move move = new Move(movePos, p);
                     moves.add(move);
@@ -494,7 +503,7 @@ public class Board {
 
         for (Piece p : newPieces) {
             if (p.isVisible() && p.isWhite() == isWhite) {
-                int[][] valid = p.getValidMoves();
+                ArrayList<int[]> valid = p.calculateValidMoves();
                 for (int[] movePos : valid) {
                     Move move = new Move(movePos, p);
                     moves.add(move);
@@ -628,10 +637,8 @@ public class Board {
         for (Piece piece : pieceList) {
             if (piece.isWhite() == isWhite && piece.isVisible()) {
                 
-                int[][] validMoves = piece.getValidMoves();
-                for (int[] validMove : validMoves) {
-                    allValidMoves.add(validMove);
-                }
+                ArrayList<int[]> validMoves = piece.calculateValidMoves();
+                allValidMoves.addAll(validMoves);
                 if (!allValidMoves.isEmpty()) {
                     return false;
                 }
@@ -641,16 +648,46 @@ public class Board {
         }
         for (Piece piece : newPieces) {
             if (piece.isWhite() == isWhite && piece.isVisible()) {
-                int[][] validMoves = piece.getValidMoves();
-                for (int[] validMove : validMoves) {
-                    allValidMoves.add(validMove);
-                }
+                ArrayList<int[]> validMoves = piece.calculateValidMoves();
+                allValidMoves.addAll(validMoves);
                 if (!allValidMoves.isEmpty()) {
                     return false;
                 }
             }
         }
         return true;
+    }
+
+    public void updateValidMoves(int x, int y, int xPos, int yPos) {
+        Queen exqueen = new Queen(null, "temp", x, y);
+        Queen exqueen2 = new Queen(null, "temp", xPos, yPos);
+        exqueen.setBoard(this);
+        exqueen2.setBoard(this);
+        ArrayList<int[]> validMoves = exqueen.getValidMovesIncludeSameSide();
+        validMoves.add(new int[]{x, y});
+        validMoves.addAll(exqueen2.getValidMovesIncludeSameSide());
+        Set<String> seen = new HashSet<>();
+        ArrayList<int[]> result = new ArrayList<>();
+
+        for (int[] array : validMoves) {
+            String arrayAsString = Arrays.toString(array);
+            if (seen.add(arrayAsString)) { // Adds only if not already present
+                result.add(array);
+            }
+        }
+        ArrayList<int[]> updaters = new ArrayList<>();
+        for (int[] validMove : result) {
+            Piece piece = pieces[validMove[0]][validMove[1]];
+            if ( piece != null) {
+                if (piece.canAttack(x, y) || piece.canAttack(xPos, yPos)) {
+                    updaters.add(validMove);
+                    piece.updateValidMoves();
+                } else if (piece.getPieceType().equals("Pawn") && ((Math.abs(validMove[0] - xPos) <= 1 && Math.abs(validMove[1] - yPos) <= 1) || (Math.abs(validMove[0] - x) <= 1 && Math.abs(validMove[1] - y) <= 1))) {
+                    updaters.add(validMove);
+                    piece.updateValidMoves();
+                }
+            }
+        }
     }
 
     public void unhighlightSquares(int[][] positions) {
@@ -712,6 +749,8 @@ public class Board {
         addPieceToSquare(piece, x, y);
         pieces[x][y] = piece;
         pieces[piece.getxPos()][piece.getyPos()] = null;
+        
+        
         
         piece.setxPos(x);
         piece.setyPos(y);
@@ -790,6 +829,30 @@ public class Board {
             }
         }
         return false;
+    }
+
+    public Piece attackedUnsafely(int x, int y, Piece piece, boolean isWhite) {
+        for (Piece p : pieceList) {
+            if (p.isVisible() && p.getMaterial() < piece.getMaterial() && p.isWhite() != isWhite && p.canAttack(x, y)) {
+                return p;
+            } else if (p.isVisible() && p.getMaterial() >= piece.getMaterial() && p.isWhite() != isWhite && p.canAttack(x, y)) {
+                if (isAttacked(x, y, !isWhite, piece)) {
+                    return p;
+                }
+                return null;
+            }
+        }
+        for (Piece p : newPieces) {
+            if (p.isVisible() && p.getMaterial() < piece.getMaterial() && p.isWhite() != isWhite && p.canAttack(x, y)) {
+                return p;
+            } else if (p.isVisible() && p.getMaterial() >= piece.getMaterial() && p.isWhite() != isWhite && p.canAttack(x, y)) {
+                if (isAttacked(x, y, !isWhite, piece)) {
+                    return p;
+                }
+                return null;
+            }
+        }
+        return null;
     }
 
     public Piece[][] getPieces() {
@@ -902,5 +965,13 @@ public class Board {
 
     public void setCleanPieces(Piece[][] cleanPieces) {
         this.cleanPieces = cleanPieces;
+    }
+
+    public HashSet<List<Piece>> getVisitedPositions() {
+        return visitedPositions;
+    }
+
+    public void setVisitedPositions(HashSet<List<Piece>> visitedPositions) {
+        this.visitedPositions = visitedPositions;
     }
 }
