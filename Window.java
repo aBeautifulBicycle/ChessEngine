@@ -250,6 +250,7 @@ public class Window {
     public void engineMakeMove(int maxDepth) {
         window.repaint();
         Piece[][] cleanBoard = new Piece[board.getPieces().length][];
+        System.out.println(board);
         for (int i = 0; i < cleanBoard.length; i++) {
             cleanBoard[i] = board.getPieces()[i].clone();
         }

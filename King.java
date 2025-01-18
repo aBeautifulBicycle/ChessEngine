@@ -153,8 +153,14 @@ public class King extends Piece{
                 
                 board.getPieces()[xPos][yPos + 1] = null;
                 board.getPieces()[xPos][0] = castleRook;
-                castleRook.setCanCastle(true);
-                castleRook.setyPos(0);
+                if (castleRook == null) {
+                    System.out.println(board);
+                    System.out.println(board.getMoveOrder());
+                    System.out.println("HOW!!");
+                } else {
+                    castleRook.setCanCastle(true);
+                    castleRook.setyPos(0);
+                }
             } else {
                 Piece castleRook = board.getPieces()[xPos][yPos - 1];
                 board.getPieces()[xPos][yPos - 1] = null;
@@ -163,9 +169,11 @@ public class King extends Piece{
                     System.out.println(board);
                     System.out.println(board.getMoveOrder());
                     System.out.println("HOW!!");
+                } else {
+                    castleRook.setCanCastle(true);
+                    castleRook.setyPos(Globals.COLS - 1);
                 }
-                castleRook.setCanCastle(true);
-                castleRook.setyPos(Globals.COLS - 1);
+                
             }
             this.setCanCastle(true);
         }
@@ -223,6 +231,10 @@ public class King extends Piece{
         }
         int x = xPos;
         int y = yPos + 1;
+        if (y >= 8) {
+            canCastle = false;
+            return false;
+        }
         Piece previousPiece = board.getPieces()[x][y];
         board.getPieces()[x][y] = this;
         board.getPieces()[getxPos()][getyPos()] = null;

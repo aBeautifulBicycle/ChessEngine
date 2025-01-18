@@ -13,6 +13,7 @@ public class Globals {
     public static final String TEST1_FEN          = "7k/Q3K3/8/8/8/8/8/8 w - - 0 1";
     public static final String TEST2_FEN          = "r3kbn1/2pppn2/qp6/3PPP1Q/pP6/P1P5/5PP1/RNB2K2 w q - 3 17";
     public static final String TEST3_FEN          = "r1b2rk1/pppp1ppp/8/2b1p3/2B1P1nq/2N2N2/PPP2PPP/1RBQR1K1 w - - 0 1";
+    public static final String TEST4_FEN          = "8/PQ2K3/8/8/8/8/7k/8 w - - 0 1";
     public static final String TEST_FEN           = STARTING_BOARD_FEN;
     
     

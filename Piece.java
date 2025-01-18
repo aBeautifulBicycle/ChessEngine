@@ -293,7 +293,12 @@ public class Piece {
     }
 
     public void highlightValidMoves() {
-        ArrayList<int[]> validMoves = calculateValidMoves();
+        ArrayList<int[]> validMoves;
+        if (this.validMoves.size() == 0) {
+            validMoves = calculateValidMoves();
+        } else {
+            validMoves = this.validMoves;
+        }
         int[][] highlightSquares = new int[validMoves.size() + 1][];
         highlightSquares[0] = new int[]{xPos, yPos};
         for (int i = 0; i < validMoves.size(); i++) {
